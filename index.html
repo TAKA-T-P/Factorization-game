@@ -1484,9 +1484,11 @@
             // ゲージを停止（次の問題が表示されるまで待つ）
             stopComboGauge();
 
-            // すぐに次の問題へ
+            // 最終問題は1秒待ってから結果画面へ、それ以外はすぐに次の問題へ
             if (isLastQuestion) {
-                endGame();
+                setTrackedTimeout(() => {
+                    endGame();
+                }, 1000);
             } else {
                 generateQuestion();
             }
