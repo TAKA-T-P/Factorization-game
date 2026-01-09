@@ -1106,6 +1106,12 @@
 
         function generateQuestion() {
             selectedAnswers = [];
+
+            // 前回のボタンの状態をクリア
+            document.querySelectorAll('.answer-btn').forEach(btn => {
+                btn.classList.remove('selected', 'correct', 'wrong');
+            });
+
             const answerGrid = document.getElementById('answerGrid');
             answerGrid.className = gameMode === 'factorize' ? 'factors-grid' : 'answer-grid';
 
