@@ -21,6 +21,24 @@
             overflow-x: hidden;
             user-select: none;
             transition: all 0.3s ease;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0);
+            pointer-events: none;
+            transition: background 0.5s ease;
+            z-index: 100;
+        }
+
+        body.gauge-depleted::before {
+            background: rgba(0, 0, 0, 0.2);
         }
 
         /* 5問連続正解時の光る演出 */
@@ -44,6 +62,8 @@
             flex-direction: column;
             justify-content: center;
             align-items: center;
+            position: relative;
+            z-index: 200;
         }
 
         .screen {
@@ -321,25 +341,33 @@
         }
 
         .audio-toggle {
-            position: absolute;
-            top: 20px;
-            right: 20px;
             background: white;
             border: 2px solid #e2e8f0;
             color: #64748b;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            font-size: 20px;
+            padding: 12px 24px;
+            font-size: clamp(14px, 3.5vw, 18px);
+            font-family: inherit;
             cursor: pointer;
+            border-radius: 12px;
             transition: all 0.3s ease;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            font-weight: 500;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            justify-content: center;
         }
 
         .audio-toggle:hover {
             background: #f1f5f9;
             border-color: #3b82f6;
-            color: #3b82f6;
+            box-shadow: 0 4px 8px rgba(59, 130, 246, 0.15);
+        }
+
+        .audio-toggle.active {
+            background: #3b82f6;
+            border-color: #3b82f6;
+            color: white;
         }
 
         .combo-display {
@@ -369,11 +397,125 @@
             100% { transform: scale(1); opacity: 1; }
         }
 
+        /* コンボ継続ゲージ */
+        .combo-gauge-container {
+            width: 100%;
+            max-width: 400px;
+            margin: 10px auto;
+            padding: 0 10px;
+        }
+
+        .combo-gauge-label {
+            font-size: clamp(12px, 3vw, 16px);
+            font-weight: 600;
+            margin-bottom: 5px;
+            text-align: center;
+            color: #64748b;
+        }
+
+        .combo-gauge-bar {
+            width: 100%;
+            height: 20px;
+            background: #e2e8f0;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+            position: relative;
+        }
+
+        .combo-gauge-fill {
+            height: 100%;
+            width: 100%;
+            background: linear-gradient(90deg, #10b981, #34d399);
+            border-radius: 10px;
+            transition: width 0.1s linear;
+            box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+        }
+
+        .combo-gauge-fill.warning {
+            background: linear-gradient(90deg, #f59e0b, #fbbf24);
+            box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+        }
+
+        .combo-gauge-fill.danger {
+            background: linear-gradient(90deg, #ef4444, #f87171);
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+            animation: gauge-pulse 0.5s ease-in-out infinite;
+        }
+
+        @keyframes gauge-pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        /* カウントダウンオーバーレイ */
+        .countdown-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.8);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 300;
+        }
+
+        .countdown-overlay.show {
+            display: flex;
+        }
+
+        .countdown-number {
+            font-size: clamp(80px, 20vw, 200px);
+            font-weight: 700;
+            color: white;
+            animation: countdown-pulse 1s ease;
+        }
+
+        @keyframes countdown-pulse {
+            0% { transform: scale(0.5); opacity: 0; }
+            50% { transform: scale(1.2); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
+        }
+
+        /* ゲーム画面のコントロールボタン */
+        .game-controls {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .control-btn {
+            background: white;
+            border: 2px solid #e2e8f0;
+            color: #64748b;
+            padding: 8px 16px;
+            font-size: clamp(12px, 3vw, 14px);
+            font-family: inherit;
+            cursor: pointer;
+            border-radius: 8px;
+            transition: all 0.3s ease;
+            font-weight: 500;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+        }
+
+        .control-btn:hover {
+            background: #f1f5f9;
+            border-color: #3b82f6;
+            color: #3b82f6;
+            box-shadow: 0 4px 8px rgba(59, 130, 246, 0.15);
+        }
+
+        .control-btn:active {
+            transform: translateY(1px);
+        }
+
         /* x文字のみを数学的なフォントにする */
         .math-x {
             font-family: 'Times New Roman', serif;
             font-style: italic;
-            font-weight: normal;
+            font-weight: bold;
         }
 
         /* 時間選択ボタンのスタイル */
@@ -410,8 +552,6 @@
 </head>
 <body>
     <div class="container">
-        <button class="audio-toggle" onclick="toggleAudio()" title="音声のオン/オフ">🔊</button>
-
         <div id="titleScreen" class="screen title-screen active">
             <h1 class="title">数学バトル</h1>
             <p style="font-size: clamp(14px, 3.5vw, 18px); margin-bottom: 30px;">展開・因数分解の計算ゲーム</p>
@@ -425,6 +565,14 @@
                 </div>
             </div>
 
+            <!-- 効果音切り替え -->
+            <div style="margin-bottom: 30px;">
+                <button class="audio-toggle active" onclick="toggleAudio()" id="audioToggleBtn">
+                    <span id="audioIcon">🔊</span>
+                    <span>効果音ON</span>
+                </button>
+            </div>
+
             <div class="mode-buttons">
                 <button class="btn" onclick="startGame('expand')">展開モード</button>
                 <button class="btn" onclick="startGame('factorize')">因数分解モード</button>
@@ -434,13 +582,27 @@
         <div id="gameScreen" class="screen game-screen">
             <div class="game-header">
                 <div class="score">スコア: <span id="score">0</span></div>
-                <div class="timer">残り時間: <span id="timeLeft">60</span>秒</div>
+                <div class="game-controls">
+                    <button class="control-btn" onclick="retryGame()">リトライ</button>
+                    <button class="control-btn" onclick="goToTitle()">戻る</button>
+                </div>
+                <div class="timer" id="timerDisplay">残り時間: <span id="timeLeft">60</span>秒</div>
             </div>
             <div class="question-area">
                 <div id="question" class="question"></div>
+                <div class="combo-gauge-container" id="comboGaugeContainer" style="display: none;">
+                    <div class="combo-gauge-label">コンボ継続ゲージ</div>
+                    <div class="combo-gauge-bar">
+                        <div id="comboGaugeFill" class="combo-gauge-fill"></div>
+                    </div>
+                </div>
                 <div id="comboDisplay" class="combo-display"></div>
                 <div id="answerGrid" class="answer-grid"></div>
             </div>
+        </div>
+
+        <div id="countdownOverlay" class="countdown-overlay">
+            <div id="countdownNumber" class="countdown-number"></div>
         </div>
 
         <div id="resultScreen" class="screen result-screen">
@@ -490,6 +652,18 @@
         let audioEnabled = true;
         let isLastQuestion = false;
         let consecutiveCorrect = 0;
+
+        // コンボゲージ関連
+        let comboGaugeTimer = null;
+        let comboGaugeValue = 100; // 0-100
+        let comboGaugeDuration = 10000; // 基本10秒
+        let comboGaugeUpdateInterval = 100; // 100msごとに更新
+
+        // タイムアウトID管理
+        let pendingTimeouts = [];
+
+        // カウントダウン実行中フラグ
+        let isCountdownRunning = false;
 
         // クイズ番組風の正解音（明るく上昇する音階・倍速版）
         function createCorrectSound() {
@@ -542,9 +716,94 @@
         const partialCorrectSound = { play: createPartialCorrectSound };
         const wrongSound = new Audio('data:audio/wav;base64,UklGRgQGAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YeMFAAD/8c/S6dHRzNHK0cnRytHM0dHR0tHR0dHS0dHRytHK0dHR0dHR0c3Q0s/S6dHK0cnQ0tHRzNLS0dHK0cnM0dHSy9HN');
 
+        // ゲーム終了時のジングル
+        function createGameOverJingle() {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            // ファンファーレ風の音階: ソ→ド→ミ→ソ(高)→ド(高)
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(392.00, audioContext.currentTime); // G4
+            oscillator.frequency.setValueAtTime(523.25, audioContext.currentTime + 0.2); // C5
+            oscillator.frequency.setValueAtTime(659.25, audioContext.currentTime + 0.4); // E5
+            oscillator.frequency.setValueAtTime(783.99, audioContext.currentTime + 0.6); // G5
+            oscillator.frequency.setValueAtTime(1046.5, audioContext.currentTime + 0.8); // C6
+
+            // 音量調整
+            gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.05);
+            gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 1.0);
+            gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 1.3);
+
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 1.3);
+        }
+
+        const gameOverJingle = { play: createGameOverJingle };
+
+        // カウントダウン音
+        function createCountdownBeep() {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(880, audioContext.currentTime); // A5
+
+            gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.2, audioContext.currentTime + 0.05);
+            gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.15);
+
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.15);
+        }
+
+        const countdownBeep = { play: createCountdownBeep };
+
+        // カウントダウン開始音（START用）
+        function createStartBeep() {
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+
+            oscillator.type = 'sine';
+            oscillator.frequency.setValueAtTime(1046.5, audioContext.currentTime); // C6 (高い音)
+
+            gainNode.gain.setValueAtTime(0, audioContext.currentTime);
+            gainNode.gain.linearRampToValueAtTime(0.3, audioContext.currentTime + 0.05);
+            gainNode.gain.linearRampToValueAtTime(0, audioContext.currentTime + 0.3);
+
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.3);
+        }
+
+        const startBeep = { play: createStartBeep };
+
         function toggleAudio() {
             audioEnabled = !audioEnabled;
-            document.querySelector('.audio-toggle').textContent = audioEnabled ? '🔊' : '🔇';
+            const toggleBtn = document.getElementById('audioToggleBtn');
+            const audioIcon = document.getElementById('audioIcon');
+            const audioText = toggleBtn.querySelector('span:last-child');
+
+            if (audioEnabled) {
+                audioIcon.textContent = '🔊';
+                audioText.textContent = '効果音ON';
+                toggleBtn.classList.add('active');
+            } else {
+                audioIcon.textContent = '🔇';
+                audioText.textContent = '効果音OFF';
+                toggleBtn.classList.remove('active');
+            }
         }
 
         function playSound(sound) {
@@ -563,6 +822,101 @@
             document.getElementById(screenId).classList.add('active');
         }
 
+        // すべての保留中のタイムアウトをクリア
+        function clearAllTimeouts() {
+            pendingTimeouts.forEach(timeoutId => clearTimeout(timeoutId));
+            pendingTimeouts = [];
+        }
+
+        // タイムアウトを追跡して設定
+        function setTrackedTimeout(callback, delay) {
+            const timeoutId = setTimeout(() => {
+                try {
+                    callback();
+                } catch (error) {
+                    console.error('Error in tracked timeout:', error);
+                }
+                // 完了したタイムアウトを配列から削除
+                pendingTimeouts = pendingTimeouts.filter(id => id !== timeoutId);
+            }, delay);
+            pendingTimeouts.push(timeoutId);
+            return timeoutId;
+        }
+
+        // コンボゲージの減少速度を計算
+        function getGaugeSpeedMultiplier() {
+            let multiplier;
+            if (timeMode === 60) {
+                // 1分モード: (1 + 0.1n) 倍
+                multiplier = 1 + (0.1 * consecutiveCorrect);
+            } else {
+                // 3分モード: (1 + 0.05n) 倍
+                multiplier = 1 + (0.05 * consecutiveCorrect);
+            }
+
+            // 因数分解モードの時は0.8倍の速度（遅くする）
+            if (gameMode === 'factorize') {
+                multiplier *= 0.8;
+            }
+
+            return multiplier;
+        }
+
+        // コンボゲージを開始
+        function startComboGauge() {
+            stopComboGauge(); // 既存のタイマーをクリア
+
+            comboGaugeValue = 100;
+            updateComboGaugeDisplay();
+
+            const speedMultiplier = getGaugeSpeedMultiplier();
+            const actualDuration = comboGaugeDuration / speedMultiplier;
+            const decrementPerUpdate = (100 / actualDuration) * comboGaugeUpdateInterval;
+
+            comboGaugeTimer = setInterval(() => {
+                comboGaugeValue -= decrementPerUpdate;
+
+                if (comboGaugeValue <= 0) {
+                    comboGaugeValue = 0;
+                    stopComboGauge();
+                    // ゲージが0になったらコンボリセット
+                    consecutiveCorrect = 0;
+                    // 画面を暗くする
+                    document.body.classList.add('gauge-depleted');
+                }
+
+                updateComboGaugeDisplay();
+            }, comboGaugeUpdateInterval);
+        }
+
+        // コンボゲージを停止
+        function stopComboGauge() {
+            if (comboGaugeTimer) {
+                clearInterval(comboGaugeTimer);
+                comboGaugeTimer = null;
+            }
+        }
+
+        // コンボゲージの表示を更新
+        function updateComboGaugeDisplay() {
+            const gaugeFill = document.getElementById('comboGaugeFill');
+            gaugeFill.style.width = comboGaugeValue + '%';
+
+            // 色の変更
+            gaugeFill.className = 'combo-gauge-fill';
+            if (comboGaugeValue <= 30) {
+                gaugeFill.classList.add('danger');
+            } else if (comboGaugeValue <= 50) {
+                gaugeFill.classList.add('warning');
+            }
+        }
+
+        // コンボゲージを表示/非表示
+        function showComboGauge(show) {
+            const container = document.getElementById('comboGaugeContainer');
+            container.style.display = show ? 'block' : 'none';
+        }
+
         function selectTime(time) {
             timeMode = time;
             document.querySelectorAll('.time-btn').forEach(btn => btn.classList.remove('active'));
@@ -570,6 +924,26 @@
         }
 
         function startGame(mode) {
+            console.log('startGame called with mode:', mode);
+            // すべての保留中のタイムアウトをクリア
+            clearAllTimeouts();
+            console.log('Timeouts cleared');
+
+            // タイマーをクリア
+            if (timer) {
+                clearInterval(timer);
+                timer = null;
+            }
+
+            // カウントダウンオーバーレイを確実に非表示にする
+            const overlay = document.getElementById('countdownOverlay');
+            if (overlay) {
+                overlay.classList.remove('show');
+            }
+            // カウントダウンフラグをリセット
+            isCountdownRunning = false;
+            console.log('Overlay cleared, countdown flag reset');
+
             gameMode = mode;
             score = 0;
             correctAnswers = 0;
@@ -580,12 +954,82 @@
             isLastQuestion = false;
             consecutiveCorrect = 0;
 
-            document.getElementById('score').textContent = score;
-            document.getElementById('timeLeft').textContent = timeLeft;
+            // コンボゲージをリセット
+            stopComboGauge();
+            comboGaugeValue = 100;
+            showComboGauge(false);
 
+            // 画面の明るさとエフェクトをリセット
+            document.body.classList.remove('gauge-depleted');
+            document.body.classList.remove('celebration');
+
+            document.getElementById('score').textContent = score;
+            document.getElementById('timerDisplay').innerHTML = '残り時間: <span id="timeLeft">' + timeLeft + '</span>秒';
+
+            console.log('About to show gameScreen');
             showScreen('gameScreen');
-            generateQuestion();
-            startTimer();
+
+            // カウントダウンを開始
+            console.log('About to show countdown');
+            showCountdown();
+        }
+
+        function showCountdown() {
+            console.log('showCountdown called, isCountdownRunning:', isCountdownRunning);
+
+            // 既にカウントダウンが実行中の場合は中断
+            if (isCountdownRunning) {
+                console.log('Countdown already running, skipping');
+                return;
+            }
+
+            isCountdownRunning = true;
+            const overlay = document.getElementById('countdownOverlay');
+            const numberDisplay = document.getElementById('countdownNumber');
+
+            const countdownSequence = [3, 2, 1, 'START!'];
+            let currentIndex = 0;
+
+            overlay.classList.add('show');
+            console.log('Countdown overlay shown');
+
+            function displayNext() {
+                console.log('displayNext called, currentIndex:', currentIndex);
+                if (currentIndex < countdownSequence.length) {
+                    const value = countdownSequence[currentIndex];
+                    numberDisplay.textContent = value;
+
+                    // アニメーションをリセットして再開
+                    numberDisplay.style.animation = 'none';
+                    setTrackedTimeout(() => {
+                        numberDisplay.style.animation = 'countdown-pulse 1s ease';
+                    }, 10);
+
+                    // 音を再生
+                    if (value === 'START!') {
+                        playSound(startBeep);
+                    } else {
+                        playSound(countdownBeep);
+                    }
+
+                    currentIndex++;
+
+                    if (currentIndex < countdownSequence.length) {
+                        setTrackedTimeout(displayNext, 1000);
+                    } else {
+                        setTrackedTimeout(() => {
+                            console.log('Countdown finished, starting game');
+                            overlay.classList.remove('show');
+                            isCountdownRunning = false;
+                            // カウントダウン終了後にゲーム開始
+                            generateQuestion();
+                            startTimer();
+                        }, 1000);
+                    }
+                }
+            }
+
+            displayNext();
         }
 
         function startTimer() {
@@ -596,7 +1040,7 @@
                 if (timeLeft <= 0) {
                     clearInterval(timer);
                     isLastQuestion = true;
-                    document.getElementById('timeLeft').textContent = '最終問題';
+                    document.getElementById('timerDisplay').innerHTML = '最終問題';
                 }
             }, 1000);
         }
@@ -605,6 +1049,16 @@
             selectedAnswers = [];
             const answerGrid = document.getElementById('answerGrid');
             answerGrid.className = gameMode === 'factorize' ? 'factors-grid' : 'answer-grid';
+
+            // 2コンボ目以降はゲージを表示してスタート
+            if (consecutiveCorrect >= 1) {
+                showComboGauge(true);
+                comboGaugeValue = 100;
+                updateComboGaugeDisplay();
+                startComboGauge();
+            } else {
+                showComboGauge(false);
+            }
 
             if (gameMode === 'expand') {
                 generateExpandQuestion();
@@ -864,12 +1318,19 @@
         }
 
         function checkFactorizeAnswer() {
-            // 中間正解音の再生チェック
+            // 中間正解音の再生チェック / 不正解判定
             if (selectedAnswers.length === 1) {
                 const firstAnswer = selectedAnswers[0];
-                if (!firstAnswer.isSquare &&
-                    (firstAnswer.value === currentQuestion.p || firstAnswer.value === currentQuestion.q)) {
-                    playSound(partialCorrectSound);
+                if (!firstAnswer.isSquare) {
+                    // 数値選択肢の場合
+                    if (firstAnswer.value === currentQuestion.p || firstAnswer.value === currentQuestion.q) {
+                        // 正解の選択肢
+                        playSound(partialCorrectSound);
+                    } else {
+                        // 不正解の選択肢を選んだら即座に不正解判定
+                        wrongAnswer();
+                        return;
+                    }
                 }
             }
 
@@ -898,7 +1359,19 @@
 
         function correctAnswer() {
             playSound(correctSound);
-            consecutiveCorrect++;
+
+            // 画面の明るさを戻す
+            document.body.classList.remove('gauge-depleted');
+
+            // コンボゲージが残っているかチェック
+            if (comboGaugeValue > 0) {
+                // コンボ継続
+                consecutiveCorrect++;
+            } else {
+                // コンボリセット（1から数え直し）
+                consecutiveCorrect = 1;
+            }
+
             correctAnswers++;
 
             // 得点計算: (10+n)²点
@@ -925,7 +1398,10 @@
                 btn.classList.add('correct');
             });
 
-            setTimeout(() => {
+            // ゲージを停止（次の問題が表示されるまで待つ）
+            stopComboGauge();
+
+            setTrackedTimeout(() => {
                 if (isLastQuestion) {
                     endGame();
                 } else {
@@ -947,7 +1423,7 @@
                 }
                 comboDisplay.classList.add('show');
 
-                setTimeout(() => {
+                setTrackedTimeout(() => {
                     comboDisplay.classList.remove('show');
                 }, 1000);
             }
@@ -972,11 +1448,17 @@
             comboDisplay.textContent = '';
             comboDisplay.classList.remove('show');
 
+            // コンボゲージを停止
+            stopComboGauge();
+
+            // 画面の明るさを戻す
+            document.body.classList.remove('gauge-depleted');
+
             document.querySelectorAll('.answer-btn.selected').forEach(btn => {
                 btn.classList.add('wrong');
             });
 
-            setTimeout(() => {
+            setTrackedTimeout(() => {
                 if (isLastQuestion) {
                     endGame();
                 } else {
@@ -984,11 +1466,41 @@
                         btn.classList.remove('selected', 'wrong');
                     });
                     selectedAnswers = [];
+                    // 次の問題を生成（ゲージは1コンボ目なので非表示）
+                    generateQuestion();
                 }
             }, 1000);
         }
 
         function endGame() {
+            // すべてのタイムアウトをクリア
+            clearAllTimeouts();
+
+            // タイマーをクリア
+            if (timer) {
+                clearInterval(timer);
+                timer = null;
+            }
+
+            // カウントダウンオーバーレイを確実に非表示にする
+            const overlay = document.getElementById('countdownOverlay');
+            if (overlay) {
+                overlay.classList.remove('show');
+            }
+            // カウントダウンフラグをリセット
+            isCountdownRunning = false;
+
+            // コンボゲージを停止
+            stopComboGauge();
+            showComboGauge(false);
+
+            // 画面の明るさとエフェクトをリセット
+            document.body.classList.remove('gauge-depleted');
+            document.body.classList.remove('celebration');
+
+            // ゲーム終了時のジングルを再生
+            playSound(gameOverJingle);
+
             const highScoreKey = `highScore_${gameMode}_${timeMode}`;
             const currentHighScore = parseInt(localStorage.getItem(highScoreKey) || '0');
             const newHighScore = Math.max(score, currentHighScore);
@@ -1013,13 +1525,47 @@
         }
 
         function retryGame() {
+            console.log('retryGame called, gameMode:', gameMode);
+            clearAllTimeouts();
+            if (timer) {
+                clearInterval(timer);
+                timer = null;
+            }
+
+            // カウントダウンオーバーレイを確実に非表示にする
+            const overlay = document.getElementById('countdownOverlay');
+            if (overlay) {
+                overlay.classList.remove('show');
+            }
+            // カウントダウンフラグをリセット
+            isCountdownRunning = false;
+
+            console.log('About to call startGame with mode:', gameMode);
             startGame(gameMode);
         }
 
         function goToTitle() {
+            console.log('goToTitle called');
+            clearAllTimeouts();
             if (timer) {
                 clearInterval(timer);
+                timer = null;
             }
+
+            // カウントダウンオーバーレイを確実に非表示にする
+            const overlay = document.getElementById('countdownOverlay');
+            if (overlay) {
+                overlay.classList.remove('show');
+            }
+            // カウントダウンフラグをリセット
+            isCountdownRunning = false;
+
+            stopComboGauge();
+            showComboGauge(false);
+            // 画面の明るさとエフェクトをリセット
+            document.body.classList.remove('gauge-depleted');
+            document.body.classList.remove('celebration');
+            console.log('About to show titleScreen');
             showScreen('titleScreen');
         }
 
@@ -1041,7 +1587,7 @@
             document.body.classList.add('celebration');
 
             // 1.5秒後に演出を終了
-            setTimeout(() => {
+            setTrackedTimeout(() => {
                 document.body.classList.remove('celebration');
             }, 1500);
         }
