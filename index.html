@@ -1015,6 +1015,16 @@
             comboGaugeValue = 100;
             showComboGauge(false);
 
+            // コンボ表示をクリア
+            const comboDisplay = document.getElementById('comboDisplay');
+            comboDisplay.textContent = '';
+            comboDisplay.classList.remove('show');
+
+            // 前回のボタンの状態をクリア
+            document.querySelectorAll('.answer-btn').forEach(btn => {
+                btn.classList.remove('selected', 'correct', 'wrong');
+            });
+
             // 画面の明るさとエフェクトをリセット
             document.body.classList.remove('gauge-depleted');
             document.body.classList.remove('celebration');
