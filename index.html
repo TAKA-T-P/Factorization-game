@@ -623,6 +623,10 @@
         <div id="resultScreen" class="screen result-screen">
             <div class="result-header">
                 <h2 class="result-title">ゲーム終了！</h2>
+                <div style="background: linear-gradient(135deg, #fef3c7 0%, #fed7aa 50%, #fbbf24 100%); border: 3px solid #f59e0b; border-radius: 16px; padding: 20px; margin-bottom: 20px; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);">
+                    <div style="font-size: clamp(14px, 3.5vw, 18px); font-weight: 600; color: #92400e; margin-bottom: 8px;">段位</div>
+                    <div id="rankDisplay" style="font-size: clamp(32px, 8vw, 56px); font-weight: 700; color: #78350f; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);"></div>
+                </div>
                 <div class="result-stats">
                     <div class="stat-item">
                         <div class="stat-label">正解数</div>
@@ -685,6 +689,33 @@
 
         // カウントダウン実行中フラグ
         let isCountdownRunning = false;
+
+        // 段位システム
+        const ranks = [
+            '10級', '9級', '8級', '7級', '6級', '5級', '4級', '3級', '2級', '1級',
+            '初段', '二段', '三段', '四段', '五段', '六段', '七段', '八段', '九段', '十段', '皆伝'
+        ];
+
+        // モードごとの係数
+        function getRankCoefficient() {
+            if (gameMode === 'expand') {
+                return timeMode === 60 ? 1.5 : 4.2;
+            } else { // factorize
+                return timeMode === 60 ? 1.25 : 3.5;
+            }
+        }
+
+        // 段位を計算
+        function calculateRank(correctCount) {
+            const coefficient = getRankCoefficient();
+            const rankIndex = Math.floor(correctCount / coefficient);
+            return ranks[Math.min(rankIndex, ranks.length - 1)];
+        }
+
+        // モード名を取得
+        function getModeName() {
+            return gameMode === 'expand' ? '展開' : '因数分解';
+        }
 
         // クイズ番組風の正解音（明るく上昇する音階・倍速版）
         function createCorrectSound() {
@@ -1541,6 +1572,11 @@
             const currentHighScore = parseInt(localStorage.getItem(highScoreKey) || '0');
             const newHighScore = Math.max(score, currentHighScore);
             localStorage.setItem(highScoreKey, newHighScore.toString());
+
+            // 段位を計算して表示
+            const rank = calculateRank(correctAnswers);
+            const modeName = getModeName();
+            document.getElementById('rankDisplay').textContent = `${modeName} ${rank}`;
 
             document.getElementById('correctCount').textContent = correctAnswers;
             document.getElementById('wrongCount').textContent = wrongAnswers;
