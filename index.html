@@ -524,6 +524,27 @@
             font-weight: bold;
         }
 
+        /* 平方根の表示スタイル */
+        .sqrt-wrapper {
+            display: inline-block;
+            position: relative;
+            white-space: nowrap;
+            vertical-align: baseline;
+        }
+
+        .sqrt-content {
+            border-top: 2px solid currentColor;
+            display: inline-block;
+            padding: 0 3px;
+            margin-left: -2px;
+            vertical-align: baseline;
+        }
+
+        /* ボタン内の平方根表示を中央揃えに */
+        .answer-btn .sqrt-wrapper {
+            vertical-align: middle;
+        }
+
         /* 時間選択ボタンのスタイル */
         .time-btn {
             min-width: 80px;
@@ -581,6 +602,7 @@
             <div class="mode-buttons">
                 <button class="btn" onclick="startGame('expand')">展開モード</button>
                 <button class="btn" onclick="startGame('factorize')">因数分解モード</button>
+                <button class="btn" onclick="startGame('squareRoot')">平方根モード</button>
             </div>
 
             <!-- 著作権表示 -->
@@ -703,7 +725,7 @@
 
         // モードごとの係数
         function getRankCoefficient() {
-            if (gameMode === 'expand') {
+            if (gameMode === 'expand' || gameMode === 'squareRoot') {
                 return timeMode === 60 ? 1.5 : 4.2;
             } else { // factorize
                 return timeMode === 60 ? 1.25 : 3.5;
@@ -719,7 +741,9 @@
 
         // モード名を取得
         function getModeName() {
-            return gameMode === 'expand' ? '展開' : '因数分解';
+            if (gameMode === 'expand') return '展開';
+            if (gameMode === 'factorize') return '因数分解';
+            return '平方根';
         }
 
         // クイズ番組風の正解音（明るく上昇する音階・倍速版）
@@ -912,6 +936,7 @@
             }
 
             // 因数分解モードの時は0.8倍の速度（遅くする）
+            // 平方根モードは展開モードと同じ速度
             if (gameMode === 'factorize') {
                 multiplier *= 0.8;
             }
@@ -1130,8 +1155,10 @@
 
             if (gameMode === 'expand') {
                 generateExpandQuestion();
-            } else {
+            } else if (gameMode === 'factorize') {
                 generateFactorizeQuestion();
+            } else {
+                generateSquareRootQuestion();
             }
         }
 
@@ -1613,7 +1640,9 @@
             questionHistory.forEach(item => {
                 const div = document.createElement('div');
                 div.className = `history-item ${item.correct ? 'correct' : 'wrong'}`;
-                div.innerHTML = formatMathText(`${item.question} = ${item.answer}`);
+                const text = `${item.question} = ${item.answer}`;
+                // xと√の両方を適切に表示
+                div.innerHTML = formatTextWithSquareRoot(formatMathText(text));
                 historyList.appendChild(div);
             });
 
@@ -1674,6 +1703,17 @@
             return text.replace(/x/g, '<span class="math-x">x</span>');
         }
 
+        // 平方根を適切な形式で表示するヘルパー関数
+        function formatSquareRoot(number) {
+            return `<span class="sqrt-wrapper">√<span class="sqrt-content">${number}</span></span>`;
+        }
+
+        // テキスト内の√記号を適切な形式に変換する関数
+        function formatTextWithSquareRoot(text) {
+            // √の後の数字を抽出して適切に表示
+            return text.replace(/√(\d+)/g, (match, number) => formatSquareRoot(number));
+        }
+
         // 5問連続正解の演出
         function triggerCelebration() {
             document.body.classList.add('celebration');
@@ -1682,6 +1722,208 @@
             setTrackedTimeout(() => {
                 document.body.classList.remove('celebration');
             }, 1500);
+        }
+
+        // 平方根を簡単化する関数（√x を a√b の形にする）
+        function simplifySquareRoot(x) {
+            let a = 1;
+            let b = x;
+
+            // 完全平方数かチェック
+            const sqrt = Math.sqrt(x);
+            if (Number.isInteger(sqrt)) {
+                return { a: sqrt, b: 1 };
+            }
+
+            // 平方数で割っていく
+            for (let i = 2; i * i <= b; i++) {
+                while (b % (i * i) === 0) {
+                    a *= i;
+                    b /= (i * i);
+                }
+            }
+
+            return { a, b };
+        }
+
+        // 平方数の因数を含む8-100の数をランダム生成
+        function getRandomSquareRootNumber() {
+            const shouldBeHighB = Math.random() < 0.2; // 20%の確率でb≧11
+            let num;
+            let attempts = 0;
+            const maxAttempts = 100;
+
+            do {
+                num = Math.floor(Math.random() * 93) + 8; // 8から100までの整数
+                const simplified = simplifySquareRoot(num);
+
+                // 平方数の因数を含む（a > 1が必須）数で、かつb≧11またはb≦10の条件を満たす
+                const isSimplifiable = simplified.a > 1;
+                const meetsCondition = shouldBeHighB ? (simplified.b >= 11) : (simplified.b <= 10);
+
+                if (isSimplifiable && meetsCondition) {
+                    break;
+                }
+
+                attempts++;
+            } while (attempts < maxAttempts);
+
+            // 最大試行回数を超えた場合は条件を緩和して任意の簡単化可能な数（a > 1）を返す
+            if (attempts >= maxAttempts) {
+                do {
+                    num = Math.floor(Math.random() * 93) + 8;
+                    const simplified = simplifySquareRoot(num);
+                } while (simplifySquareRoot(num).a <= 1);
+            }
+
+            return num;
+        }
+
+        // 平方根問題を生成
+        function generateSquareRootQuestion() {
+            let x;
+            do {
+                x = getRandomSquareRootNumber();
+                // 直前の問題と同じでないかチェック
+            } while (lastQuestionValues && lastQuestionValues.x === x);
+
+            const simplified = simplifySquareRoot(x);
+            const correctA = simplified.a;
+            const correctB = simplified.b;
+
+            currentQuestion = {
+                x: x,
+                a: correctA,
+                b: correctB,
+                original: `√${x}`,
+                answer: correctB === 1 ? `${correctA}` : `${correctA}√${correctB}`
+            };
+
+            // 現在の問題の値を保存
+            lastQuestionValues = { x };
+
+            document.getElementById('question').innerHTML = `${formatSquareRoot(x)} = ____`;
+            generateSquareRootAnswers();
+        }
+
+        // 平方根の解答ボタンを生成（4×2レイアウト）
+        function generateSquareRootAnswers() {
+            const correctA = currentQuestion.a;
+            const correctB = currentQuestion.b;
+            const isPerfectSquare = correctB === 1;
+
+            // 整数の選択肢を生成（左側4つ）- 1は除外
+            const aChoices = new Set([correctA]);
+            while (aChoices.size < 4) {
+                const candidate = Math.floor(Math.random() * 9) + 2; // 2-10の整数
+                aChoices.add(candidate);
+            }
+
+            // √の選択肢を生成（右側4つ）
+            const bChoices = new Set();
+            if (!isPerfectSquare) {
+                bChoices.add(correctB);
+            }
+
+            // 簡単化できない数（素数や平方数の因数を含まない数）を選択肢に追加
+            const possibleB = [2, 3, 5, 6, 7, 10, 11, 13, 14, 15, 17, 19, 21, 22, 23];
+            while (bChoices.size < 4) {
+                const candidate = possibleB[Math.floor(Math.random() * possibleB.length)];
+                bChoices.add(candidate);
+            }
+
+            const aArray = Array.from(aChoices).sort(() => Math.random() - 0.5);
+            const bArray = Array.from(bChoices).sort(() => Math.random() - 0.5);
+
+            const answerGrid = document.getElementById('answerGrid');
+            answerGrid.innerHTML = '';
+            answerGrid.className = 'answer-grid'; // 4×2グリッド
+
+            // 左側4個と右側4個を交互に配置して縦4×横2にする
+            for (let i = 0; i < 4; i++) {
+                // 左側: 整数（a の部分）
+                const aBtn = document.createElement('button');
+                aBtn.className = 'answer-btn';
+                aBtn.textContent = aArray[i];
+                aBtn.onclick = () => selectSquareRootAnswer(aBtn, 'a', aArray[i]);
+                answerGrid.appendChild(aBtn);
+
+                // 右側: √の数（√b の部分）
+                const bBtn = document.createElement('button');
+                bBtn.className = 'answer-btn';
+                bBtn.innerHTML = formatSquareRoot(bArray[i]);
+                bBtn.onclick = () => selectSquareRootAnswer(bBtn, 'b', bArray[i]);
+                answerGrid.appendChild(bBtn);
+            }
+        }
+
+        // 平方根の解答を選択
+        function selectSquareRootAnswer(button, type, value) {
+            // 同じタイプの既存選択を解除
+            document.querySelectorAll('.answer-btn').forEach(btn => {
+                if (btn !== button && btn.classList.contains('selected')) {
+                    const isLeftColumn = Array.from(btn.parentElement.children).indexOf(btn) % 2 === 0;
+                    const otherType = isLeftColumn ? 'a' : 'b';
+                    if (otherType === type) {
+                        btn.classList.remove('selected');
+                    }
+                }
+            });
+
+            button.classList.toggle('selected');
+
+            if (button.classList.contains('selected')) {
+                selectedAnswers = selectedAnswers.filter(ans => ans.type !== type);
+                selectedAnswers.push({ type, value });
+            } else {
+                selectedAnswers = selectedAnswers.filter(ans => !(ans.type === type && ans.value === value));
+            }
+
+            checkSquareRootAnswer();
+        }
+
+        // 平方根の解答をチェック
+        function checkSquareRootAnswer() {
+            const isPerfectSquare = currentQuestion.b === 1;
+
+            if (isPerfectSquare) {
+                // 完全平方数の場合、整数のみで正解
+                const hasCorrectA = selectedAnswers.some(ans => ans.type === 'a' && ans.value === currentQuestion.a);
+
+                // 整数のみを選択している場合
+                if (selectedAnswers.length === 1 && selectedAnswers[0].type === 'a') {
+                    if (hasCorrectA) {
+                        correctAnswer();
+                    } else {
+                        wrongAnswer();
+                    }
+                } else if (selectedAnswers.length === 2) {
+                    // √も選んでいる場合は不正解
+                    wrongAnswer();
+                }
+            } else {
+                // 平方数でない場合、a√bの形で解答
+                const hasCorrectA = selectedAnswers.some(ans => ans.type === 'a' && ans.value === currentQuestion.a);
+                const hasCorrectB = selectedAnswers.some(ans => ans.type === 'b' && ans.value === currentQuestion.b);
+
+                // 中間正解音の再生チェック
+                if (selectedAnswers.length === 1) {
+                    const firstAnswer = selectedAnswers[0];
+                    if ((firstAnswer.type === 'a' && firstAnswer.value === currentQuestion.a) ||
+                        (firstAnswer.type === 'b' && firstAnswer.value === currentQuestion.b)) {
+                        playSound(partialCorrectSound);
+                    }
+                }
+
+                // 両方選択している場合
+                if (selectedAnswers.length === 2) {
+                    if (hasCorrectA && hasCorrectB) {
+                        correctAnswer();
+                    } else {
+                        wrongAnswer();
+                    }
+                }
+            }
         }
     </script>
 </body>
