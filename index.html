@@ -83,14 +83,85 @@
             justify-content: center;
             align-items: center;
             background: radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
+            position: relative;
+            overflow: hidden;
+        }
+
+        /* 背景の流れる数式 */
+        .math-formula-bg {
+            position: absolute;
+            font-size: clamp(24px, 5vw, 40px);
+            font-weight: 300;
+            color: rgba(59, 130, 246, 0.20);
+            white-space: nowrap;
+            pointer-events: none;
+            font-family: 'Times New Roman', serif;
+        }
+
+        .math-formula-bg.flow-1 {
+            top: 10%;
+            animation: flow-diagonal-1 20s linear infinite;
+        }
+
+        .math-formula-bg.flow-2 {
+            top: 30%;
+            animation: flow-diagonal-2 25s linear infinite;
+            animation-delay: -5s;
+        }
+
+        .math-formula-bg.flow-3 {
+            top: 50%;
+            animation: flow-diagonal-3 22s linear infinite;
+            animation-delay: -10s;
+        }
+
+        .math-formula-bg.flow-4 {
+            top: 70%;
+            animation: flow-diagonal-1 24s linear infinite;
+            animation-delay: -15s;
+        }
+
+        @keyframes flow-diagonal-1 {
+            0% {
+                transform: translate(-100%, -20px) rotate(-10deg);
+            }
+            100% {
+                transform: translate(100vw, 20px) rotate(-10deg);
+            }
+        }
+
+        @keyframes flow-diagonal-2 {
+            0% {
+                transform: translate(-100%, 20px) rotate(-12deg);
+            }
+            100% {
+                transform: translate(100vw, -20px) rotate(-12deg);
+            }
+        }
+
+        @keyframes flow-diagonal-3 {
+            0% {
+                transform: translate(-100%, -15px) rotate(-8deg);
+            }
+            100% {
+                transform: translate(100vw, 15px) rotate(-8deg);
+            }
         }
 
         .title {
             font-size: clamp(28px, 7vw, 52px);
             font-weight: 700;
-            margin-bottom: 30px;
+            margin-bottom: 10px;
             color: #3b82f6;
             text-shadow: none;
+        }
+
+        .catchphrase {
+            font-size: clamp(12px, 3vw, 18px);
+            font-weight: 700;
+            margin-bottom: 30px;
+            color: #64748b;
+            font-style: italic;
         }
 
 
@@ -649,7 +720,14 @@
 <body>
     <div class="container">
         <div id="titleScreen" class="screen title-screen active">
+            <!-- 背景の流れる数式 -->
+            <div class="math-formula-bg flow-1">(<span class="math-x">x</span>+3)(<span class="math-x">x</span>-2) = <span class="math-x">x</span>²+<span class="math-x">x</span>-6</div>
+            <div class="math-formula-bg flow-2"><span class="math-x">x</span>²-9 = (<span class="math-x">x</span>+3)(<span class="math-x">x</span>-3)</div>
+            <div class="math-formula-bg flow-3">(<span class="math-x">x</span>+5)² = <span class="math-x">x</span>²+10<span class="math-x">x</span>+25</div>
+            <div class="math-formula-bg flow-4"><span class="math-x">x</span>²-7<span class="math-x">x</span>+12 = (<span class="math-x">x</span>-3)(<span class="math-x">x</span>-4)</div>
+
             <h1 class="title">因数×展開 ファイト！</h1>
+            <p class="catchphrase" id="catchphrase"></p>
 
             <!-- 時間選択 -->
             <div style="margin-bottom: 30px;">
@@ -784,6 +862,30 @@
 
         // カウントダウン実行中フラグ
         let isCountdownRunning = false;
+
+        // キャッチコピー
+        const catchphrases = [
+            '式を制する者が、入試を制す。',
+            '展開と因数分解、ここで完成させろ。',
+            'その１問が、合格を近づける。',
+            '速さと正確さ、その先へ。',
+            '計算力は、裏切らない。',
+            '君は、何段まで到達できるか。',
+            '今日の１プレイが、次の段位を決める。',
+            'ミス０を狙え。スピードで差をつけろ。',
+            '限界は、次の問題で超えろ。',
+            '挑戦し続けた者だけが、上へ行く。',
+            'できるまでやる。だから、できる。',
+            '苦手は、練習で武器になる。',
+            '昨日の自分に、今日も勝て。',
+            '反復は、最強の戦略だ。',
+            '本番で解ける力は、ここで作る。',
+            '式を操れ。数式の頂へ。',
+            '計算を、支配せよ。',
+            '因数分解は、選ばれし者の技。',
+            '段位は、実力の証明だ。',
+            'この修練が、君を別次元へ連れていく。'
+        ];
 
         // 段位システム
         const ranks = [
@@ -1861,6 +1963,15 @@
             }, 1500);
         }
 
+        // ランダムなキャッチコピーを表示
+        function displayRandomCatchphrase() {
+            const randomIndex = Math.floor(Math.random() * catchphrases.length);
+            const catchphraseElement = document.getElementById('catchphrase');
+            if (catchphraseElement) {
+                catchphraseElement.textContent = catchphrases[randomIndex];
+            }
+        }
+
         // 紙吹雪の演出（10コンボごと）
         function triggerConfetti() {
             const container = document.createElement('div');
@@ -2114,6 +2225,11 @@
                 }
             }
         }
+
+        // ページ読み込み時にキャッチコピーを表示
+        window.addEventListener('DOMContentLoaded', () => {
+            displayRandomCatchphrase();
+        });
     </script>
 </body>
 </html>
