@@ -524,25 +524,10 @@
             font-weight: bold;
         }
 
-        /* 平方根の表示スタイル */
-        .sqrt-wrapper {
-            display: inline-block;
-            position: relative;
-            white-space: nowrap;
-            vertical-align: baseline;
-        }
-
-        .sqrt-content {
-            border-top: 2px solid currentColor;
-            display: inline-block;
-            padding: 0 3px;
-            margin-left: -2px;
-            vertical-align: baseline;
-        }
-
-        /* ボタン内の平方根表示を中央揃えに */
-        .answer-btn .sqrt-wrapper {
-            vertical-align: middle;
+        /* √記号を横棒が長いフォントで表示 */
+        .sqrt-symbol {
+            font-family: 'Cambria Math', 'STIX Two Math', 'Latin Modern Math', 'STIXGeneral', serif;
+            font-size: 1.1em;
         }
 
         /* 時間選択ボタンのスタイル */
@@ -1642,7 +1627,7 @@
                 div.className = `history-item ${item.correct ? 'correct' : 'wrong'}`;
                 const text = `${item.question} = ${item.answer}`;
                 // xと√の両方を適切に表示
-                div.innerHTML = formatTextWithSquareRoot(formatMathText(text));
+                div.innerHTML = formatSqrtSymbol(formatMathText(text));
                 historyList.appendChild(div);
             });
 
@@ -1703,15 +1688,9 @@
             return text.replace(/x/g, '<span class="math-x">x</span>');
         }
 
-        // 平方根を適切な形式で表示するヘルパー関数
-        function formatSquareRoot(number) {
-            return `<span class="sqrt-wrapper">√<span class="sqrt-content">${number}</span></span>`;
-        }
-
-        // テキスト内の√記号を適切な形式に変換する関数
-        function formatTextWithSquareRoot(text) {
-            // √の後の数字を抽出して適切に表示
-            return text.replace(/√(\d+)/g, (match, number) => formatSquareRoot(number));
+        // √記号を数学用フォントで表示するヘルパー関数
+        function formatSqrtSymbol(text) {
+            return text.replace(/√/g, '<span class="sqrt-symbol">√</span>');
         }
 
         // 5問連続正解の演出
@@ -1802,7 +1781,7 @@
             // 現在の問題の値を保存
             lastQuestionValues = { x };
 
-            document.getElementById('question').innerHTML = `${formatSquareRoot(x)} = ____`;
+            document.getElementById('question').innerHTML = formatSqrtSymbol(`√${x} = ____`);
             generateSquareRootAnswers();
         }
 
@@ -1851,7 +1830,7 @@
                 // 右側: √の数（√b の部分）
                 const bBtn = document.createElement('button');
                 bBtn.className = 'answer-btn';
-                bBtn.innerHTML = formatSquareRoot(bArray[i]);
+                bBtn.innerHTML = formatSqrtSymbol(`√${bArray[i]}`);
                 bBtn.onclick = () => selectSquareRootAnswer(bBtn, 'b', bArray[i]);
                 answerGrid.appendChild(bBtn);
             }
