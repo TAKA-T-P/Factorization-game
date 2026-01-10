@@ -530,6 +530,32 @@
             font-size: 1.1em;
         }
 
+        /* 平方根の表示スタイル（数字の上に横棒） */
+        .sqrt-wrapper {
+            display: inline-block;
+            position: relative;
+            white-space: nowrap;
+            vertical-align: baseline;
+        }
+
+        .sqrt-content {
+            border-top: 2px solid currentColor;
+            display: inline-block;
+            padding: 0 3px;
+            margin-left: -2px;
+            vertical-align: baseline;
+        }
+
+        /* ボタン内の平方根表示を中央揃えに */
+        .answer-btn .sqrt-wrapper {
+            vertical-align: middle;
+        }
+
+        /* 問題文内の√記号の横棒を太く */
+        .question .sqrt-content {
+            border-top: 5px solid currentColor;
+        }
+
         /* 時間選択ボタンのスタイル */
         .time-btn {
             min-width: 80px;
@@ -710,10 +736,12 @@
 
         // モードごとの係数
         function getRankCoefficient() {
-            if (gameMode === 'expand' || gameMode === 'squareRoot') {
+            if (gameMode === 'expand') {
                 return timeMode === 60 ? 1.5 : 4.2;
-            } else { // factorize
+            } else if (gameMode === 'factorize') {
                 return timeMode === 60 ? 1.25 : 3.5;
+            } else { // squareRoot
+                return timeMode === 60 ? 1.8 : 5.0;
             }
         }
 
@@ -1362,31 +1390,84 @@
         function generateFactorizeAnswers() {
             const correctP = currentQuestion.p;
             const correctQ = currentQuestion.q;
+            const isSquare = correctP === correctQ;
 
-            const choices = new Set([correctP, correctQ]);
+            let leftChoices, rightChoices;
 
-            while (choices.size < 7) {
-                choices.add(getRandomNonZero());
+            if (isSquare) {
+                // 2乗問題の場合：正解は1つだけ、²と組み合わせる
+                // 左側の選択肢（正解1つ + ダミー3つ）
+                leftChoices = new Set([correctP]);
+                while (leftChoices.size < 4) {
+                    const candidate = getRandomNonZero();
+                    if (candidate !== correctP) {
+                        leftChoices.add(candidate);
+                    }
+                }
+
+                // 右側の選択肢（ダミー3つのみ、正解は含めない）
+                rightChoices = new Set();
+                while (rightChoices.size < 3) {
+                    const candidate = getRandomNonZero();
+                    if (candidate !== correctP && !leftChoices.has(candidate)) {
+                        rightChoices.add(candidate);
+                    }
+                }
+            } else {
+                // 通常問題の場合：正解の2つをランダムに左右に振り分け
+                const leftCorrect = Math.random() < 0.5 ? correctP : correctQ;
+                const rightCorrect = leftCorrect === correctP ? correctQ : correctP;
+
+                // 左側の選択肢（正解1つ + ダミー3つ）
+                leftChoices = new Set([leftCorrect]);
+                while (leftChoices.size < 4) {
+                    const candidate = getRandomNonZero();
+                    if (candidate !== correctP && candidate !== correctQ) {
+                        leftChoices.add(candidate);
+                    }
+                }
+
+                // 右側の選択肢（正解1つ + ダミー2つ）
+                rightChoices = new Set([rightCorrect]);
+                while (rightChoices.size < 3) {
+                    const candidate = getRandomNonZero();
+                    if (candidate !== correctP && candidate !== correctQ && !leftChoices.has(candidate)) {
+                        rightChoices.add(candidate);
+                    }
+                }
             }
 
-            const choicesArray = Array.from(choices).sort(() => Math.random() - 0.5);
+            const leftArray = Array.from(leftChoices).sort(() => Math.random() - 0.5);
+            const rightArray = Array.from(rightChoices).sort(() => Math.random() - 0.5);
 
             const answerGrid = document.getElementById('answerGrid');
             answerGrid.innerHTML = '';
 
-            for (let i = 0; i < 7; i++) {
-                const btn = document.createElement('button');
-                btn.className = 'answer-btn';
-                btn.innerHTML = formatMathText(`(x${choicesArray[i] >= 0 ? '+' : ''}${choicesArray[i]})`);
-                btn.onclick = () => selectFactorizeAnswer(btn, choicesArray[i]);
-                answerGrid.appendChild(btn);
-            }
+            // 左側4個と右側4個を交互に配置して縦4×横2にする
+            for (let i = 0; i < 4; i++) {
+                // 左側のボタン
+                const leftBtn = document.createElement('button');
+                leftBtn.className = 'answer-btn';
+                leftBtn.innerHTML = formatMathText(`(x${leftArray[i] >= 0 ? '+' : ''}${leftArray[i]})`);
+                leftBtn.onclick = () => selectFactorizeAnswer(leftBtn, leftArray[i]);
+                answerGrid.appendChild(leftBtn);
 
-            const squareBtn = document.createElement('button');
-            squareBtn.className = 'answer-btn';
-            squareBtn.textContent = '²';
-            squareBtn.onclick = () => selectSquare(squareBtn);
-            answerGrid.appendChild(squareBtn);
+                // 右側のボタン
+                if (i < 3) {
+                    const rightBtn = document.createElement('button');
+                    rightBtn.className = 'answer-btn';
+                    rightBtn.innerHTML = formatMathText(`(x${rightArray[i] >= 0 ? '+' : ''}${rightArray[i]})`);
+                    rightBtn.onclick = () => selectFactorizeAnswer(rightBtn, rightArray[i]);
+                    answerGrid.appendChild(rightBtn);
+                } else {
+                    // 右下に²ボタンを配置
+                    const squareBtn = document.createElement('button');
+                    squareBtn.className = 'answer-btn';
+                    squareBtn.textContent = '²';
+                    squareBtn.onclick = () => selectSquare(squareBtn);
+                    answerGrid.appendChild(squareBtn);
+                }
+            }
         }
 
         function selectFactorizeAnswer(button, value) {
@@ -1611,7 +1692,8 @@
             // 段位を計算して表示
             const rank = calculateRank(correctAnswers);
             const modeName = getModeName();
-            document.getElementById('rankDisplay').textContent = `${modeName} ${rank}`;
+            const plusMark = timeMode === 180 ? '＋' : '';
+            document.getElementById('rankDisplay').textContent = `${modeName} ${rank}${plusMark}`;
 
             document.getElementById('correctCount').textContent = correctAnswers;
             document.getElementById('wrongCount').textContent = wrongAnswers;
@@ -1627,7 +1709,7 @@
                 div.className = `history-item ${item.correct ? 'correct' : 'wrong'}`;
                 const text = `${item.question} = ${item.answer}`;
                 // xと√の両方を適切に表示
-                div.innerHTML = formatSqrtSymbol(formatMathText(text));
+                div.innerHTML = formatTextWithSquareRoot(formatMathText(text));
                 historyList.appendChild(div);
             });
 
@@ -1691,6 +1773,17 @@
         // √記号を数学用フォントで表示するヘルパー関数
         function formatSqrtSymbol(text) {
             return text.replace(/√/g, '<span class="sqrt-symbol">√</span>');
+        }
+
+        // 平方根を適切な形式で表示するヘルパー関数（横棒付き）
+        function formatSquareRoot(number) {
+            return `<span class="sqrt-wrapper"><span class="sqrt-symbol">√</span><span class="sqrt-content">${number}</span></span>`;
+        }
+
+        // テキスト内の√記号を適切な形式に変換する関数
+        function formatTextWithSquareRoot(text) {
+            // √の後の数字を抽出して適切に表示
+            return text.replace(/√(\d+)/g, (match, number) => formatSquareRoot(number));
         }
 
         // 5問連続正解の演出
@@ -1781,7 +1874,7 @@
             // 現在の問題の値を保存
             lastQuestionValues = { x };
 
-            document.getElementById('question').innerHTML = formatSqrtSymbol(`√${x} = ____`);
+            document.getElementById('question').innerHTML = `${formatSquareRoot(x)} = ____`;
             generateSquareRootAnswers();
         }
 
@@ -1830,7 +1923,7 @@
                 // 右側: √の数（√b の部分）
                 const bBtn = document.createElement('button');
                 bBtn.className = 'answer-btn';
-                bBtn.innerHTML = formatSqrtSymbol(`√${bArray[i]}`);
+                bBtn.innerHTML = formatSquareRoot(bArray[i]);
                 bBtn.onclick = () => selectSquareRootAnswer(bBtn, 'b', bArray[i]);
                 answerGrid.appendChild(bBtn);
             }
