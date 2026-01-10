@@ -898,7 +898,7 @@
             if (gameMode === 'expand') {
                 return timeMode === 60 ? 1.5 : 4.2;
             } else if (gameMode === 'factorize') {
-                return timeMode === 60 ? 1.25 : 3.5;
+                return timeMode === 60 ? 1.2 : 3.4;
             } else { // squareRoot
                 return timeMode === 60 ? 1.8 : 5.0;
             }
@@ -1103,8 +1103,8 @@
                 // 1分モード: (1 + 0.1n) 倍
                 multiplier = 1 + (0.1 * consecutiveCorrect);
             } else {
-                // 3分モード: (1 + 0.05n) 倍
-                multiplier = 1 + (0.05 * consecutiveCorrect);
+                // 3分モード: (1 + 0.04n) 倍
+                multiplier = 1 + (0.04 * consecutiveCorrect);
             }
 
             // 因数分解モードの時は0.8倍の速度（遅くする）
@@ -2197,21 +2197,31 @@
                     } else {
                         wrongAnswer();
                     }
-                } else if (selectedAnswers.length === 2) {
-                    // √も選んでいる場合は不正解
-                    wrongAnswer();
+                } else if (selectedAnswers.length >= 1) {
+                    // √を選んでいる場合は即座に不正解
+                    const hasWrongB = selectedAnswers.some(ans => ans.type === 'b');
+                    if (hasWrongB) {
+                        wrongAnswer();
+                    } else if (selectedAnswers.length === 2) {
+                        // 整数を2つ選んでいる場合も不正解
+                        wrongAnswer();
+                    }
                 }
             } else {
                 // 平方数でない場合、a√bの形で解答
                 const hasCorrectA = selectedAnswers.some(ans => ans.type === 'a' && ans.value === currentQuestion.a);
                 const hasCorrectB = selectedAnswers.some(ans => ans.type === 'b' && ans.value === currentQuestion.b);
 
-                // 中間正解音の再生チェック
+                // 中間正解音の再生チェック / 不正解判定
                 if (selectedAnswers.length === 1) {
                     const firstAnswer = selectedAnswers[0];
                     if ((firstAnswer.type === 'a' && firstAnswer.value === currentQuestion.a) ||
                         (firstAnswer.type === 'b' && firstAnswer.value === currentQuestion.b)) {
                         playSound(partialCorrectSound);
+                    } else {
+                        // 不正解の選択肢を1つ選んだ時点で不正解
+                        wrongAnswer();
+                        return;
                     }
                 }
 
