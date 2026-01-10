@@ -630,7 +630,7 @@
             }
             100% {
                 opacity: 0;
-                transform: translate(40vw, -80vh) rotate(720deg);
+                transform: translate(50vw, -40vh) rotate(720deg);
             }
         }
 
@@ -641,7 +641,7 @@
             }
             100% {
                 opacity: 0;
-                transform: translate(-40vw, -80vh) rotate(-720deg);
+                transform: translate(-50vw, -40vh) rotate(-720deg);
             }
         }
     </style>
@@ -1880,15 +1880,15 @@
                 // ランダムな色
                 confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
 
-                // 開始位置を左下または右下に設定
+                // 開始位置を左中央または右中央に設定
                 if (fromLeft) {
-                    // 左下から（left: 0-10%, bottom: 0-10%）
-                    confetti.style.left = Math.random() * 10 + '%';
-                    confetti.style.bottom = Math.random() * 10 + '%';
+                    // 左中央から（left: 0-5%, top: 40-60%）
+                    confetti.style.left = Math.random() * 5 + '%';
+                    confetti.style.top = (40 + Math.random() * 20) + '%';
                 } else {
-                    // 右下から（left: 90-100%, bottom: 0-10%）
-                    confetti.style.left = (90 + Math.random() * 10) + '%';
-                    confetti.style.bottom = Math.random() * 10 + '%';
+                    // 右中央から（left: 95-100%, top: 40-60%）
+                    confetti.style.left = (95 + Math.random() * 5) + '%';
+                    confetti.style.top = (40 + Math.random() * 20) + '%';
                 }
 
                 // ランダムなサイズ
