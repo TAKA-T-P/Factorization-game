@@ -377,6 +377,19 @@
             font-size: clamp(14px, 3.5vw, 18px);
             margin-bottom: 10px;
             font-weight: 700;
+            display: flex;
+            align-items: center;
+            position: relative;
+        }
+
+        .history-title-center {
+            flex: 1;
+            text-align: center;
+        }
+
+        .history-title-right {
+            position: absolute;
+            right: 0;
         }
 
         .history-item {
@@ -845,7 +858,7 @@
                 </div>
             </div>
             <div class="history">
-                <div class="history-title">問題履歴</div>
+                <div class="history-title" id="historyTitle">問題履歴</div>
                 <div id="historyList"></div>
             </div>
         </div>
@@ -923,9 +936,10 @@
         }
 
         // 段位を計算
-        function calculateRank(correctCount) {
+        function calculateRank(correctCount, wrongCount) {
             const coefficient = getRankCoefficient();
-            const rankIndex = Math.floor(correctCount / coefficient);
+            const netScore = Math.max(0, correctCount - wrongCount);
+            const rankIndex = Math.floor(netScore / coefficient);
             return ranks[Math.min(rankIndex, ranks.length - 1)];
         }
 
@@ -1886,7 +1900,7 @@
             localStorage.setItem(highScoreKey, newHighScore.toString());
 
             // 段位を計算して表示
-            const rank = calculateRank(correctAnswers);
+            const rank = calculateRank(correctAnswers, wrongAnswers);
             const modeName = getModeName();
             const plusMark = timeMode === 180 ? '＋' : '';
             document.getElementById('rankDisplay').textContent = `${modeName} ${rank}${plusMark}`;
@@ -1896,6 +1910,17 @@
             document.getElementById('maxComboCount').textContent = maxCombo;
             document.getElementById('finalScore').textContent = score;
             document.getElementById('highScore').textContent = newHighScore;
+
+            // 正解した問題の平均解答時間を計算
+            const correctItems = questionHistory.filter(item => item.correct);
+            const historyTitle = document.getElementById('historyTitle');
+            if (correctItems.length > 0) {
+                const totalTime = correctItems.reduce((sum, item) => sum + parseFloat(item.time), 0);
+                const averageTime = (totalTime / correctItems.length).toFixed(1);
+                historyTitle.innerHTML = `<span class="history-title-center">問題履歴</span><span class="history-title-right">平均　${averageTime}秒</span>`;
+            } else {
+                historyTitle.innerHTML = '<span class="history-title-center">問題履歴</span>';
+            }
 
             const historyList = document.getElementById('historyList');
             historyList.innerHTML = '';
