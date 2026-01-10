@@ -386,6 +386,10 @@
             background: #f8fafc;
             border-radius: 8px;
             line-height: 1.3;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
         }
 
         .history-item.correct {
@@ -394,6 +398,17 @@
 
         .history-item.wrong {
             color: #ef4444;
+        }
+
+        .history-item-content {
+            flex: 1;
+        }
+
+        .history-item-time {
+            flex-shrink: 0;
+            font-weight: 600;
+            opacity: 0.7;
+            white-space: nowrap;
         }
 
         .factors-grid {
@@ -852,6 +867,7 @@
         let consecutiveCorrect = 0;
         let maxCombo = 0; // 最大コンボ数
         let lastQuestionValues = null; // 直前の問題の値を保存
+        let questionStartTime = 0; // 問題開始時刻
 
         // コンボゲージ関連
         let comboGaugeTimer = null;
@@ -1306,6 +1322,9 @@
         function generateQuestion() {
             selectedAnswers = [];
 
+            // 問題開始時刻を記録
+            questionStartTime = Date.now();
+
             // 前回のボタンの状態をクリア
             document.querySelectorAll('.answer-btn').forEach(btn => {
                 btn.classList.remove('selected', 'correct', 'wrong');
@@ -1721,10 +1740,14 @@
             const totalPoints = Math.pow(10 + consecutiveCorrect, 2);
             score += totalPoints;
 
+            // 解答時間を計算（0.1秒単位）
+            const answerTime = ((Date.now() - questionStartTime) / 1000).toFixed(1);
+
             questionHistory.push({
                 question: currentQuestion.original,
                 answer: currentQuestion.answer,
-                correct: true
+                correct: true,
+                time: answerTime
             });
 
             document.getElementById('score').textContent = score;
@@ -1787,10 +1810,14 @@
             consecutiveCorrect = 0;  // コンボリセット
             wrongAnswers++;
 
+            // 解答時間を計算（0.1秒単位）
+            const answerTime = ((Date.now() - questionStartTime) / 1000).toFixed(1);
+
             questionHistory.push({
                 question: currentQuestion.original,
                 answer: currentQuestion.answer,
-                correct: false
+                correct: false,
+                time: answerTime
             });
 
             document.getElementById('score').textContent = score;
@@ -1877,8 +1904,18 @@
                 const div = document.createElement('div');
                 div.className = `history-item ${item.correct ? 'correct' : 'wrong'}`;
                 const text = `${item.question} = ${item.answer}`;
-                // xと√の両方を適切に表示
-                div.innerHTML = formatTextWithSquareRoot(formatMathText(text));
+
+                // 問題内容と解答時間を分けて表示
+                const contentSpan = document.createElement('span');
+                contentSpan.className = 'history-item-content';
+                contentSpan.innerHTML = formatTextWithSquareRoot(formatMathText(text));
+
+                const timeSpan = document.createElement('span');
+                timeSpan.className = 'history-item-time';
+                timeSpan.textContent = `${item.time}秒`;
+
+                div.appendChild(contentSpan);
+                div.appendChild(timeSpan);
                 historyList.appendChild(div);
             });
 
