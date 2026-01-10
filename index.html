@@ -5,7 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>数学バトル - 展開・因数分解ゲーム</title>
     <style>
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Orbitron:wght@700;900&display=swap');
 
         * {
             margin: 0;
@@ -149,11 +149,13 @@
         }
 
         .title {
+            font-family: 'Orbitron', sans-serif;
             font-size: clamp(28px, 7vw, 52px);
-            font-weight: 700;
+            font-weight: 900;
             margin-bottom: 10px;
             color: #3b82f6;
-            text-shadow: none;
+            text-shadow: 2px 2px 4px rgba(59, 130, 246, 0.3);
+            letter-spacing: 0.05em;
         }
 
         .catchphrase {
@@ -726,7 +728,7 @@
             <div class="math-formula-bg flow-3">(<span class="math-x">x</span>+5)² = <span class="math-x">x</span>²+10<span class="math-x">x</span>+25</div>
             <div class="math-formula-bg flow-4"><span class="math-x">x</span>²-7<span class="math-x">x</span>+12 = (<span class="math-x">x</span>-3)(<span class="math-x">x</span>-4)</div>
 
-            <h1 class="title">因数×展開 ファイト！</h1>
+            <h1 class="title">因数×展開 FIGHT!</h1>
             <p class="catchphrase" id="catchphrase"></p>
 
             <!-- 時間選択 -->
