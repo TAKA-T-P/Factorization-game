@@ -643,6 +643,64 @@
             100% { transform: scale(1); opacity: 1; }
         }
 
+        /* ヘルプボタン */
+        .help-button {
+            position: absolute;
+            top: 10px;
+            left: 50%;
+            transform: translateX(-50%);
+            padding: 8px 16px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 20px;
+            font-size: clamp(12px, 3vw, 16px);
+            font-weight: 600;
+            cursor: pointer;
+            opacity: 0;
+            pointer-events: none;
+            transition: all 0.3s ease;
+            z-index: 10;
+            box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .help-button.show {
+            opacity: 1;
+            pointer-events: auto;
+            animation: help-button-appear 0.5s ease;
+        }
+
+        .help-button:hover {
+            transform: translateX(-50%) scale(1.05);
+            box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+        }
+
+        .help-button:active {
+            transform: translateX(-50%) scale(0.95);
+        }
+
+        @keyframes help-button-appear {
+            0% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
+            100% { opacity: 1; transform: translateX(-50%) translateY(0); }
+        }
+
+        /* 正解選択肢を光らせるスタイル */
+        .answer-btn.hint-highlight {
+            animation: hint-glow 1.5s ease-in-out infinite;
+            box-shadow: 0 0 20px rgba(34, 197, 94, 0.8), 0 0 40px rgba(34, 197, 94, 0.4);
+        }
+
+        @keyframes hint-glow {
+            0%, 100% {
+                box-shadow: 0 0 20px rgba(34, 197, 94, 0.8), 0 0 40px rgba(34, 197, 94, 0.4);
+                border-color: #22c55e;
+            }
+            50% {
+                box-shadow: 0 0 30px rgba(34, 197, 94, 1), 0 0 60px rgba(34, 197, 94, 0.6);
+                border-color: #16a34a;
+            }
+        }
+
         /* コンボ継続ゲージ */
         .combo-gauge-container {
             width: 100%;
@@ -954,6 +1012,7 @@
                         <div id="comboGaugeFill" class="combo-gauge-fill"></div>
                     </div>
                 </div>
+                <button id="helpButton" class="help-button" onclick="showCorrectAnswerHint()">ヘルプ</button>
                 <div id="comboDisplay" class="combo-display"></div>
                 <div id="question" class="question"></div>
                 <div id="answerGrid" class="answer-grid"></div>
@@ -1043,6 +1102,11 @@
         let maxCombo = 0; // 最大コンボ数
         let lastQuestionValues = null; // 直前の問題の値を保存
         let questionStartTime = 0; // 問題開始時刻
+
+        // ヘルプボタン関連
+        let helpButtonTimeout = null; // 10秒後にヘルプボタンを表示するタイマー
+        let lastQuestionTimeout = null; // 最終問題の20秒タイムアウト
+        let helpUsed = false; // ヘルプを使用したかどうか
 
         // コンボゲージ関連
         let comboGaugeTimer = null;
@@ -1459,6 +1523,136 @@
             document.getElementById(`time${time}`).classList.add('active');
         }
 
+        // ヘルプボタン表示
+        function showHelpButton() {
+            const helpButton = document.getElementById('helpButton');
+            if (helpButton && !helpUsed) {
+                helpButton.classList.add('show');
+            }
+        }
+
+        // ヘルプボタン非表示
+        function hideHelpButton() {
+            const helpButton = document.getElementById('helpButton');
+            if (helpButton) {
+                helpButton.classList.remove('show');
+            }
+            if (helpButtonTimeout) {
+                clearTimeout(helpButtonTimeout);
+                helpButtonTimeout = null;
+            }
+        }
+
+        // ヘルプボタン押下時の処理
+        function showCorrectAnswerHint() {
+            helpUsed = true;
+            hideHelpButton();
+
+            // すべての選択肢からhint-highlightを削除
+            document.querySelectorAll('.answer-btn').forEach(btn => {
+                btn.classList.remove('hint-highlight');
+            });
+
+            if (gameMode === 'expand') {
+                // 展開問題の場合、正解のx係数と定数項のうち1つだけをランダムに光らせる
+                const correctX = currentQuestion.xCoeff;
+                const correctConst = currentQuestion.constant;
+
+                // 正解の選択肢を集める
+                const correctButtons = [];
+                document.querySelectorAll('.answer-btn').forEach(btn => {
+                    const value = parseInt(btn.getAttribute('data-value'));
+                    const type = btn.getAttribute('data-type');
+
+                    if ((type === 'x' && value === correctX) ||
+                        (type === 'const' && value === correctConst)) {
+                        correctButtons.push(btn);
+                    }
+                });
+
+                // ランダムに1つだけ選んで光らせる
+                if (correctButtons.length > 0) {
+                    const randomIndex = Math.floor(Math.random() * correctButtons.length);
+                    correctButtons[randomIndex].classList.add('hint-highlight');
+                }
+            } else if (gameMode === 'factorize') {
+                // 因数分解問題の場合、正解の因数のうち1つだけを光らせる
+                const correctP = currentQuestion.p;
+                const correctQ = currentQuestion.q;
+
+                // 正解の選択肢を集める
+                const correctButtons = [];
+                document.querySelectorAll('.answer-btn').forEach(btn => {
+                    const value = parseInt(btn.getAttribute('data-value'));
+                    const position = btn.getAttribute('data-position');
+
+                    // 2乗問題の場合
+                    if (correctP === correctQ && position === 'left' && value === correctP) {
+                        correctButtons.push(btn);
+                    }
+                    // 通常問題の場合
+                    else if (correctP !== correctQ && (value === correctP || value === correctQ)) {
+                        correctButtons.push(btn);
+                    }
+                });
+
+                // ランダムに1つだけ選んで光らせる
+                if (correctButtons.length > 0) {
+                    const randomIndex = Math.floor(Math.random() * correctButtons.length);
+                    correctButtons[randomIndex].classList.add('hint-highlight');
+                }
+            } else if (gameMode === 'squareRoot') {
+                // 平方根問題の場合、正解のaとbのうち1つだけをランダムに光らせる
+                const correctA = currentQuestion.a;
+                const correctB = currentQuestion.b;
+                const isPerfectSquare = correctB === 1;
+
+                // 正解の選択肢を集める
+                const correctButtons = [];
+                document.querySelectorAll('.answer-btn').forEach(btn => {
+                    const dataValue = btn.getAttribute('data-value');
+                    const dataType = btn.getAttribute('data-type');
+                    const value = parseInt(dataValue);
+
+                    // 完全平方数の場合はaのみ、そうでない場合はaとb両方を候補にする
+                    if (dataType === 'a' && value === correctA) {
+                        correctButtons.push(btn);
+                    } else if (!isPerfectSquare && dataType === 'b' && value === correctB) {
+                        correctButtons.push(btn);
+                    }
+                });
+
+                // ランダムに1つだけ選んで光らせる
+                if (correctButtons.length > 0) {
+                    const randomIndex = Math.floor(Math.random() * correctButtons.length);
+                    correctButtons[randomIndex].classList.add('hint-highlight');
+                }
+            }
+        }
+
+        // 最終問題の20秒タイムアウト処理
+        function startLastQuestionTimeout() {
+            if (lastQuestionTimeout) {
+                clearTimeout(lastQuestionTimeout);
+            }
+
+            lastQuestionTimeout = setTrackedTimeout(() => {
+                handleQuestionTimeout();
+            }, 20000); // 20秒
+        }
+
+        // タイムアウト処理
+        function handleQuestionTimeout() {
+            const comboDisplay = document.getElementById('comboDisplay');
+            comboDisplay.innerHTML = '<span>時間切れ</span>';
+            comboDisplay.classList.add('show');
+
+            setTrackedTimeout(() => {
+                comboDisplay.classList.remove('show');
+                wrongAnswer();
+            }, 1000);
+        }
+
         function startGame(mode) {
             // すべての保留中のタイムアウトをクリア
             clearAllTimeouts();
@@ -1579,6 +1773,8 @@
                     clearInterval(timer);
                     isLastQuestion = true;
                     document.getElementById('timerDisplay').innerHTML = '最終問題';
+                    // 最終問題の20秒タイムアウトを開始
+                    startLastQuestionTimeout();
                 }
             }, 100);
         }
@@ -1589,10 +1785,28 @@
             // 問題開始時刻を記録
             questionStartTime = Date.now();
 
-            // 前回のボタンの状態をクリア
+            // 前回のボタンの状態とヘルプボタン関連をクリア
             document.querySelectorAll('.answer-btn').forEach(btn => {
-                btn.classList.remove('selected', 'correct', 'wrong');
+                btn.classList.remove('selected', 'correct', 'wrong', 'hint-highlight');
             });
+
+            // ヘルプボタンを非表示にして、タイマーをクリア
+            hideHelpButton();
+            helpUsed = false;
+
+            // 10秒後にヘルプボタンを表示
+            helpButtonTimeout = setTrackedTimeout(() => {
+                showHelpButton();
+            }, 10000);
+
+            // 最終問題の場合、20秒のタイムアウトタイマーを開始
+            if (isLastQuestion && lastQuestionTimeout) {
+                clearTimeout(lastQuestionTimeout);
+                lastQuestionTimeout = null;
+            }
+            if (isLastQuestion) {
+                startLastQuestionTimeout();
+            }
 
             const answerGrid = document.getElementById('answerGrid');
             answerGrid.className = gameMode === 'factorize' ? 'factors-grid' : 'answer-grid';
@@ -1704,6 +1918,8 @@
                 const xBtn = document.createElement('button');
                 xBtn.className = 'answer-btn';
                 xBtn.innerHTML = formatMathText(`${xArray[i] >= 0 ? '+' : ''}${xArray[i] === 1 ? '' : xArray[i] === -1 ? '-' : xArray[i]}x`);
+                xBtn.setAttribute('data-type', 'x');
+                xBtn.setAttribute('data-value', xArray[i]);
                 xBtn.onclick = () => selectExpandAnswer(xBtn, 'x', xArray[i]);
                 answerGrid.appendChild(xBtn);
 
@@ -1711,6 +1927,8 @@
                 const constBtn = document.createElement('button');
                 constBtn.className = 'answer-btn';
                 constBtn.textContent = `${constArray[i] >= 0 ? '+' : ''}${constArray[i]}`;
+                constBtn.setAttribute('data-type', 'const');
+                constBtn.setAttribute('data-value', constArray[i]);
                 constBtn.onclick = () => selectExpandAnswer(constBtn, 'const', constArray[i]);
                 answerGrid.appendChild(constBtn);
             }
@@ -1893,6 +2111,8 @@
                 const leftBtn = document.createElement('button');
                 leftBtn.className = 'answer-btn';
                 leftBtn.innerHTML = formatMathText(`(x${leftArray[i] >= 0 ? '+' : ''}${leftArray[i]})`);
+                leftBtn.setAttribute('data-position', 'left');
+                leftBtn.setAttribute('data-value', leftArray[i]);
                 leftBtn.onclick = () => selectFactorizeAnswer(leftBtn, leftArray[i]);
                 answerGrid.appendChild(leftBtn);
 
@@ -1901,6 +2121,8 @@
                     const rightBtn = document.createElement('button');
                     rightBtn.className = 'answer-btn';
                     rightBtn.innerHTML = formatMathText(`(x${rightArray[i] >= 0 ? '+' : ''}${rightArray[i]})`);
+                    rightBtn.setAttribute('data-position', 'right');
+                    rightBtn.setAttribute('data-value', rightArray[i]);
                     rightBtn.onclick = () => selectFactorizeAnswer(rightBtn, rightArray[i]);
                     answerGrid.appendChild(rightBtn);
                 } else {
@@ -1908,6 +2130,8 @@
                     const squareBtn = document.createElement('button');
                     squareBtn.className = 'answer-btn';
                     squareBtn.textContent = '²';
+                    squareBtn.setAttribute('data-position', 'right');
+                    squareBtn.setAttribute('data-value', 'square');
                     squareBtn.onclick = () => selectSquare(squareBtn);
                     answerGrid.appendChild(squareBtn);
                 }
@@ -1979,6 +2203,15 @@
         }
 
         function correctAnswer() {
+            // ヘルプボタンを非表示にし、タイマーをクリア
+            hideHelpButton();
+
+            // 最終問題のタイムアウトをクリア
+            if (lastQuestionTimeout) {
+                clearTimeout(lastQuestionTimeout);
+                lastQuestionTimeout = null;
+            }
+
             playSound(correctSound);
 
             // 画面の明るさを戻す
@@ -2069,6 +2302,15 @@
         }
 
         function wrongAnswer() {
+            // ヘルプボタンを非表示にし、タイマーをクリア
+            hideHelpButton();
+
+            // 最終問題のタイムアウトをクリア
+            if (lastQuestionTimeout) {
+                clearTimeout(lastQuestionTimeout);
+                lastQuestionTimeout = null;
+            }
+
             playSound(wrongSound);
             score = Math.max(0, score - 200);  // -200点
             consecutiveCorrect = 0;  // コンボリセット
@@ -2472,6 +2714,8 @@
                 const aBtn = document.createElement('button');
                 aBtn.className = 'answer-btn';
                 aBtn.textContent = aArray[i];
+                aBtn.setAttribute('data-type', 'a');
+                aBtn.setAttribute('data-value', aArray[i]);
                 aBtn.onclick = () => selectSquareRootAnswer(aBtn, 'a', aArray[i]);
                 answerGrid.appendChild(aBtn);
 
@@ -2479,6 +2723,8 @@
                 const bBtn = document.createElement('button');
                 bBtn.className = 'answer-btn';
                 bBtn.innerHTML = formatSquareRoot(bArray[i]);
+                bBtn.setAttribute('data-type', 'b');
+                bBtn.setAttribute('data-value', bArray[i]);
                 bBtn.onclick = () => selectSquareRootAnswer(bBtn, 'b', bArray[i]);
                 answerGrid.appendChild(bBtn);
             }
