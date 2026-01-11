@@ -587,11 +587,14 @@
         }
 
         .audio-toggle {
+            position: absolute;
+            top: 20px;
+            right: 20px;
             background: white;
             border: 2px solid #e2e8f0;
             color: #64748b;
-            padding: 12px 24px;
-            font-size: clamp(14px, 3.5vw, 18px);
+            padding: 10px 20px;
+            font-size: clamp(12px, 3vw, 16px);
             font-family: inherit;
             cursor: pointer;
             border-radius: 12px;
@@ -602,6 +605,7 @@
             align-items: center;
             gap: 8px;
             justify-content: center;
+            z-index: 10;
         }
 
         .audio-toggle:hover {
@@ -616,12 +620,21 @@
             color: white;
         }
 
+        /* コンボ表示とヘルプボタンのコンテナ */
+        .combo-help-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin: 10px 0;
+            min-height: 45px;
+            position: relative;
+        }
+
         .combo-display {
             font-size: clamp(16px, 4vw, 28px);
             font-weight: 700;
             color: #f59e0b;
             text-align: center;
-            margin: 10px 0;
             min-height: 45px;
             display: flex;
             align-items: center;
@@ -629,6 +642,7 @@
             opacity: 0;
             transform: scale(0.5);
             transition: all 0.3s ease;
+            flex: 1;
         }
 
         .combo-display.show {
@@ -645,10 +659,9 @@
 
         /* ヘルプボタン */
         .help-button {
-            position: absolute;
-            top: 10px;
-            left: 50%;
-            transform: translateX(-50%);
+            display: flex;
+            align-items: center;
+            justify-content: center;
             padding: 8px 16px;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
             color: white;
@@ -659,29 +672,33 @@
             cursor: pointer;
             opacity: 0;
             pointer-events: none;
+            transform: scale(0.5);
             transition: all 0.3s ease;
-            z-index: 10;
             box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+            min-height: 45px;
+            white-space: nowrap;
         }
 
         .help-button.show {
             opacity: 1;
             pointer-events: auto;
+            transform: scale(1);
             animation: help-button-appear 0.5s ease;
         }
 
         .help-button:hover {
-            transform: translateX(-50%) scale(1.05);
+            transform: scale(1.05);
             box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
         }
 
         .help-button:active {
-            transform: translateX(-50%) scale(0.95);
+            transform: scale(0.95);
         }
 
         @keyframes help-button-appear {
-            0% { opacity: 0; transform: translateX(-50%) translateY(-10px); }
-            100% { opacity: 1; transform: translateX(-50%) translateY(0); }
+            0% { transform: scale(0.5); opacity: 0; }
+            50% { transform: scale(1.1); opacity: 1; }
+            100% { transform: scale(1); opacity: 1; }
         }
 
         /* 正解選択肢を光らせるスタイル */
@@ -956,6 +973,12 @@
             <div class="math-formula-bg flow-3">(<span class="math-x">x</span>+5)² = <span class="math-x">x</span>²+10<span class="math-x">x</span>+25</div>
             <div class="math-formula-bg flow-4"><span class="math-x">x</span>²-7<span class="math-x">x</span>+12 = (<span class="math-x">x</span>-3)(<span class="math-x">x</span>-4)</div>
 
+            <!-- 効果音切り替え（右上） -->
+            <button class="audio-toggle active" onclick="toggleAudio()" id="audioToggleBtn">
+                <span id="audioIcon">🔊</span>
+                <span>効果音ON</span>
+            </button>
+
             <h1 class="title">因数×展開 FIGHT!</h1>
             <p class="catchphrase" id="catchphrase"></p>
 
@@ -965,14 +988,6 @@
                     <button class="btn time-btn active" onclick="selectTime(60)" id="time60">1分</button>
                     <button class="btn time-btn" onclick="selectTime(180)" id="time180">3分</button>
                 </div>
-            </div>
-
-            <!-- 効果音切り替え -->
-            <div style="margin-bottom: 30px;">
-                <button class="audio-toggle active" onclick="toggleAudio()" id="audioToggleBtn">
-                    <span id="audioIcon">🔊</span>
-                    <span>効果音ON</span>
-                </button>
             </div>
 
             <div class="mode-buttons">
@@ -1012,8 +1027,10 @@
                         <div id="comboGaugeFill" class="combo-gauge-fill"></div>
                     </div>
                 </div>
-                <button id="helpButton" class="help-button" onclick="showCorrectAnswerHint()">ヘルプ</button>
-                <div id="comboDisplay" class="combo-display"></div>
+                <div class="combo-help-container">
+                    <div id="comboDisplay" class="combo-display"></div>
+                    <button id="helpButton" class="help-button" onclick="showCorrectAnswerHint()">ヒント</button>
+                </div>
                 <div id="question" class="question"></div>
                 <div id="answerGrid" class="answer-grid"></div>
             </div>
