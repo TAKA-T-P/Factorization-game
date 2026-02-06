@@ -1381,7 +1381,7 @@
             if (difficultyMode === 'hard') {
                 // ハードモードの係数
                 if (gameMode === 'expand') {
-                    return timeMode === 60 ? 0.88 : 2.5;
+                    return timeMode === 60 ? 0.9 : 2.5;
                 } else if (gameMode === 'factorize') {
                     return timeMode === 60 ? 1.0 : 2.8;
                 } else { // squareRoot
@@ -1400,9 +1400,11 @@
         }
 
         // 段位を計算
-        function calculateRank(correctCount, wrongCount) {
+        function calculateRank(correctCount, wrongCount, maxComboCount) {
             const coefficient = getRankCoefficient();
-            const netScore = Math.max(0, correctCount - wrongCount);
+            // n = (最大コンボ数-1) × 0.1、最大値は0.9
+            const n = Math.min((maxComboCount - 1) * 0.1, 0.9);
+            const netScore = Math.max(0, correctCount - wrongCount + n);
             const rankIndex = Math.floor(netScore / coefficient);
             return ranks[Math.min(rankIndex, ranks.length - 1)];
         }
@@ -3814,7 +3816,7 @@
             localStorage.setItem(highScoreKey, newHighScore.toString());
 
             // 段位を計算して表示
-            const rank = calculateRank(correctAnswers, wrongAnswers);
+            const rank = calculateRank(correctAnswers, wrongAnswers, maxCombo);
             const modeName = getModeName();
             const difficultyName = difficultyMode === 'hard' ? 'ハード' : '';
             const plusMark = timeMode === 180 ? '＋' : '';
