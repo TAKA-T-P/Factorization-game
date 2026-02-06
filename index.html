@@ -183,14 +183,14 @@
             background: linear-gradient(45deg, #3b82f6, #2563eb);
             border: 2px solid #3b82f6;
             color: white;
-            padding: 15px 30px;
+            padding: 12px 30px;
             font-size: clamp(16px, 4vw, 24px);
             font-family: inherit;
             cursor: pointer;
             border-radius: 12px;
             transition: all 0.3s ease;
             font-weight: 600;
-            min-height: 60px;
+            min-height: 50px;
             box-shadow: 0 4px 6px rgba(59, 130, 246, 0.2);
         }
 
@@ -219,14 +219,14 @@
             background: linear-gradient(45deg, #64748b, #475569);
             border: 2px solid #64748b;
             color: white;
-            padding: 15px 20px;
+            padding: 12px 20px;
             font-size: clamp(16px, 4vw, 24px);
             font-family: inherit;
             cursor: pointer;
             border-radius: 12px;
             transition: all 0.3s ease;
             font-weight: 700;
-            min-height: 60px;
+            min-height: 50px;
             min-width: 60px;
             box-shadow: 0 4px 6px rgba(100, 116, 139, 0.2);
         }
@@ -1090,7 +1090,7 @@
                 <span>効果音ON</span>
             </button>
 
-            <h1 class="title">因数×展開 FIGHT!</h1>
+            <h1 class="title" id="gameTitle">因数×展開 FIGHT!</h1>
             <p class="catchphrase" id="catchphrase"></p>
 
             <!-- 時間選択 -->
@@ -1126,7 +1126,7 @@
 
             <!-- 著作権表示 -->
             <div style="margin-top: 40px; font-size: 12px; color: #64748b; opacity: 0.85;">
-                ©2026 T.TAKEMOTO
+                ©2026 T.TAKEMOTO / KEC Glows
             </div>
         </div>
 
@@ -1385,7 +1385,7 @@
                 } else if (gameMode === 'factorize') {
                     return timeMode === 60 ? 1.0 : 2.8;
                 } else { // squareRoot
-                    return timeMode === 60 ? 1.5 : 4.2;
+                    return timeMode === 60 ? 1.7 : 4.75;
                 }
             } else {
                 // ノーマルモードの係数
@@ -1607,9 +1607,9 @@
             if (difficultyMode === 'hard') {
                 // ハードモード
                 if (gameMode === 'expand') {
-                    multiplier *= 0.6; // 展開ハードは0.6倍（遅い）
+                    multiplier *= 0.7; // 展開ハードは0.7倍（遅い）
                 } else if (gameMode === 'factorize') {
-                    multiplier *= 0.8; // 因数分解ハードは0.8倍
+                    multiplier *= 0.85; // 因数分解ハードは0.85倍
                 }
                 // 平方根ハードはそのまま
             } else {
@@ -1688,11 +1688,16 @@
             difficultyMode = difficulty;
             document.querySelectorAll('.difficulty-btn').forEach(btn => btn.classList.remove('active'));
             document.getElementById(`difficulty${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}`).classList.add('active');
-            // ハードモード選択時に背景を赤っぽくする
+            const gameTitle = document.getElementById('gameTitle');
+            // ハードモード選択時に背景とタイトルを赤っぽくする
             if (difficulty === 'hard') {
                 document.body.classList.add('hard-mode');
+                gameTitle.style.color = '#dc2626';
+                gameTitle.style.textShadow = '2px 2px 4px rgba(220, 38, 38, 0.3)';
             } else {
                 document.body.classList.remove('hard-mode');
+                gameTitle.style.color = '#3b82f6';
+                gameTitle.style.textShadow = '2px 2px 4px rgba(59, 130, 246, 0.3)';
             }
         }
 
