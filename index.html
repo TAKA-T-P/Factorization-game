@@ -390,7 +390,7 @@
         .question {
             font-size: clamp(26px, 7vw, 48px);
             font-weight: 600;
-            margin-bottom: 20px;
+            margin-bottom: 5px;
             text-align: center;
             color: #1e293b;
             text-shadow: none;
@@ -408,7 +408,7 @@
             gap: 10px;
             width: 100%;
             max-width: 400px;
-            margin-top: 20px;
+            margin-top: 5px;
         }
 
         .answer-grid-12 {
@@ -418,7 +418,7 @@
             gap: 8px;
             width: 100%;
             max-width: 500px;
-            margin-top: 20px;
+            margin-top: 5px;
         }
 
         /* 分数表示用スタイル */
@@ -628,7 +628,7 @@
             gap: 10px;
             width: 100%;
             max-width: 400px;
-            margin-top: 20px;
+            margin-top: 5px;
         }
 
         .factors-grid .answer-btn:nth-child(8) {
@@ -699,7 +699,7 @@
             font-weight: 700;
             color: #f59e0b;
             text-align: center;
-            min-height: 45px;
+            min-height: 35px;
             display: flex;
             align-items: center;
             justify-content: center;
@@ -1351,11 +1351,11 @@
             if (difficultyMode === 'hard') {
                 // ハードモードの係数
                 if (gameMode === 'expand') {
-                    return timeMode === 60 ? 1.0 : 2.8;
+                    return timeMode === 60 ? 0.88 : 2.5;
                 } else if (gameMode === 'factorize') {
                     return timeMode === 60 ? 1.0 : 2.8;
                 } else { // squareRoot
-                    return timeMode === 60 ? 1.25 : 3.5;
+                    return timeMode === 60 ? 1.5 : 4.2;
                 }
             } else {
                 // ノーマルモードの係数
@@ -1709,47 +1709,121 @@
             });
 
             if (gameMode === 'expand') {
-                // 展開問題の場合、正解のx係数と定数項のうち1つだけをランダムに光らせる
-                const correctX = currentQuestion.xCoeff;
-                const correctConst = currentQuestion.constant;
-
                 // 正解の選択肢を集める
                 const correctButtons = [];
-                document.querySelectorAll('.answer-btn').forEach(btn => {
-                    const value = parseInt(btn.getAttribute('data-value'));
-                    const type = btn.getAttribute('data-type');
 
-                    if ((type === 'x' && value === correctX) ||
-                        (type === 'const' && value === correctConst)) {
-                        correctButtons.push(btn);
+                if (difficultyMode === 'hard' && currentQuestion.hardPattern) {
+                    // ハードモード: col1, col2, col3 から正解を探す
+                    const pattern = currentQuestion.hardPattern;
+                    let correctValues = {};
+
+                    if (pattern === 1) {
+                        if (currentQuestion.xyCoeff === 0) {
+                            correctValues = { col1: 1, col3: currentQuestion.y2Coeff };
+                        } else {
+                            correctValues = { col1: 1, col2: currentQuestion.xyCoeff, col3: currentQuestion.y2Coeff };
+                        }
+                    } else if (pattern === 2) {
+                        correctValues = { col1: currentQuestion.x2Coeff, col2: currentQuestion.xCoeff, col3: currentQuestion.constant };
+                    } else if (pattern === 3) {
+                        correctValues = { col1: currentQuestion.x2Coeff, col2: currentQuestion.xyCoeff, col3: currentQuestion.y2Coeff };
+                    } else if (pattern === 4) {
+                        correctValues = { col1: currentQuestion.x2Coeff, col3: currentQuestion.constant };
+                    } else if (pattern === 5) {
+                        correctValues = { col1: currentQuestion.x2Coeff, col3: currentQuestion.y2Coeff };
+                    } else if (pattern === 6) {
+                        if (currentQuestion.xCoeff === 0) {
+                            correctValues = { col1: 1, col3: currentQuestion.constant };
+                        } else {
+                            correctValues = { col1: 1, col2: currentQuestion.xCoeff, col3: currentQuestion.constant };
+                        }
                     }
-                });
 
-                // ランダムに1つだけ選んで光らせる
+                    document.querySelectorAll('.answer-btn').forEach(btn => {
+                        const value = parseInt(btn.getAttribute('data-value'));
+                        const type = btn.getAttribute('data-type');
+                        if (correctValues[type] === value) {
+                            correctButtons.push(btn);
+                        }
+                    });
+                } else {
+                    // ノーマルモード
+                    const correctX = currentQuestion.xCoeff;
+                    const correctConst = currentQuestion.constant;
+
+                    document.querySelectorAll('.answer-btn').forEach(btn => {
+                        const value = parseInt(btn.getAttribute('data-value'));
+                        const type = btn.getAttribute('data-type');
+
+                        if ((type === 'x' && value === correctX) ||
+                            (type === 'const' && value === correctConst)) {
+                            correctButtons.push(btn);
+                        }
+                    });
+                }
+
+                // ハードモードは2つ、ノーマルモードは1つ光らせる
                 if (correctButtons.length > 0) {
-                    const randomIndex = Math.floor(Math.random() * correctButtons.length);
-                    correctButtons[randomIndex].classList.add('hint-highlight');
+                    if (difficultyMode === 'hard' && correctButtons.length >= 2) {
+                        // ハードモード: ランダムに2つ選んで光らせる
+                        const shuffled = correctButtons.sort(() => Math.random() - 0.5);
+                        shuffled[0].classList.add('hint-highlight');
+                        shuffled[1].classList.add('hint-highlight');
+                    } else {
+                        // ノーマルモード: ランダムに1つだけ光らせる
+                        const randomIndex = Math.floor(Math.random() * correctButtons.length);
+                        correctButtons[randomIndex].classList.add('hint-highlight');
+                    }
                 }
             } else if (gameMode === 'factorize') {
-                // 因数分解問題の場合、正解の因数のうち1つだけを光らせる
-                const correctP = currentQuestion.p;
-                const correctQ = currentQuestion.q;
-
                 // 正解の選択肢を集める
                 const correctButtons = [];
-                document.querySelectorAll('.answer-btn').forEach(btn => {
-                    const value = parseInt(btn.getAttribute('data-value'));
-                    const position = btn.getAttribute('data-position');
 
-                    // 2乗問題の場合
-                    if (correctP === correctQ && position === 'left' && value === correctP) {
-                        correctButtons.push(btn);
+                if (difficultyMode === 'hard' && currentQuestion.hardPattern) {
+                    // ハードモード
+                    const pattern = currentQuestion.hardPattern;
+
+                    if (pattern === 1) {
+                        // (x+ay)(x+by) 形式
+                        const correctA = currentQuestion.a;
+                        const correctB = currentQuestion.b;
+                        document.querySelectorAll('.answer-btn').forEach(btn => {
+                            const value = parseInt(btn.getAttribute('data-value'));
+                            if (value === correctA || value === correctB) {
+                                correctButtons.push(btn);
+                            }
+                        });
+                    } else {
+                        // (cx+d)², (cx+dy)², (cx+d)(cx-d), (cx+dy)(cx-dy) 形式
+                        const correctC = currentQuestion.c;
+                        const correctD = currentQuestion.d;
+                        document.querySelectorAll('.answer-btn').forEach(btn => {
+                            const c = parseInt(btn.getAttribute('data-c'));
+                            const d = parseInt(btn.getAttribute('data-d'));
+                            if (c === correctC && (d === correctD || d === -correctD)) {
+                                correctButtons.push(btn);
+                            }
+                        });
                     }
-                    // 通常問題の場合
-                    else if (correctP !== correctQ && (value === correctP || value === correctQ)) {
-                        correctButtons.push(btn);
-                    }
-                });
+                } else {
+                    // ノーマルモード
+                    const correctP = currentQuestion.p;
+                    const correctQ = currentQuestion.q;
+
+                    document.querySelectorAll('.answer-btn').forEach(btn => {
+                        const value = parseInt(btn.getAttribute('data-value'));
+                        const position = btn.getAttribute('data-position');
+
+                        // 2乗問題の場合
+                        if (correctP === correctQ && position === 'left' && value === correctP) {
+                            correctButtons.push(btn);
+                        }
+                        // 通常問題の場合
+                        else if (correctP !== correctQ && (value === correctP || value === correctQ)) {
+                            correctButtons.push(btn);
+                        }
+                    });
+                }
 
                 // ランダムに1つだけ選んで光らせる
                 if (correctButtons.length > 0) {
