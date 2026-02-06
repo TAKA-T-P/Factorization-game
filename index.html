@@ -47,6 +47,11 @@
             animation: celebration-glow 1.5s ease-in-out;
         }
 
+        /* ハードモード選択時の背景 */
+        body.hard-mode {
+            background: linear-gradient(135deg, #fef2f2 0%, #fecaca 50%, #fca5a5 100%);
+        }
+
         @keyframes celebration-glow {
             0% { box-shadow: inset 0 0 0 rgba(245, 158, 11, 0); }
             50% { box-shadow: inset 0 0 100px rgba(245, 158, 11, 0.3); }
@@ -390,6 +395,10 @@
             color: #1e293b;
             text-shadow: none;
             line-height: 1.3;
+            min-height: 100px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
         .answer-grid {
@@ -400,6 +409,34 @@
             width: 100%;
             max-width: 400px;
             margin-top: 20px;
+        }
+
+        .answer-grid-12 {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr;
+            grid-template-rows: repeat(4, 1fr);
+            gap: 8px;
+            width: 100%;
+            max-width: 500px;
+            margin-top: 20px;
+        }
+
+        /* 分数表示用スタイル */
+        .fraction {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            vertical-align: middle;
+            font-size: clamp(20px, 5vw, 32px);
+        }
+
+        .fraction .numerator {
+            border-bottom: 3px solid currentColor;
+            padding: 2px 8px;
+        }
+
+        .fraction .denominator {
+            padding: 2px 8px;
         }
 
         .answer-btn {
@@ -564,6 +601,25 @@
             font-weight: 600;
             opacity: 0.7;
             white-space: nowrap;
+        }
+
+        /* 履歴表示用の分数スタイル */
+        .history-fraction {
+            display: inline-flex;
+            flex-direction: column;
+            align-items: center;
+            vertical-align: middle;
+            font-size: 0.8em;
+            line-height: 1.1;
+        }
+
+        .history-fraction .numerator {
+            border-bottom: 2px solid currentColor;
+            padding: 1px 4px;
+        }
+
+        .history-fraction .denominator {
+            padding: 1px 4px;
         }
 
         .factors-grid {
@@ -894,6 +950,23 @@
             border-color: #10b981 !important;
         }
 
+        /* 難易度選択ボタンのスタイル */
+        .difficulty-btn {
+            min-width: 100px;
+            padding: 12px 20px;
+            font-size: clamp(14px, 3.5vw, 18px) !important;
+        }
+
+        .difficulty-btn.active[data-difficulty="normal"] {
+            background: linear-gradient(45deg, #059669, #10b981) !important;
+            border-color: #10b981 !important;
+        }
+
+        .difficulty-btn.active[data-difficulty="hard"] {
+            background: linear-gradient(45deg, #dc2626, #ef4444) !important;
+            border-color: #ef4444 !important;
+        }
+
         @media (max-width: 480px) {
             .container {
                 padding: 5px;
@@ -998,6 +1071,14 @@
                 </div>
             </div>
 
+            <!-- 難易度選択 -->
+            <div style="margin-bottom: 15px;">
+                <div style="display: flex; gap: 15px; justify-content: center;">
+                    <button class="btn difficulty-btn active" onclick="selectDifficulty('normal')" id="difficultyNormal" data-difficulty="normal">ノーマル</button>
+                    <button class="btn difficulty-btn" onclick="selectDifficulty('hard')" id="difficultyHard" data-difficulty="hard">ハード</button>
+                </div>
+            </div>
+
             <div class="mode-buttons">
                 <div class="mode-button-row">
                     <button class="btn" onclick="startGame('expand')">展開ラッシュ</button>
@@ -1066,8 +1147,8 @@
             </div>
             <div class="result-header">
                 <h2 class="result-title">ゲーム終了！</h2>
-                <div style="background: linear-gradient(135deg, #fef3c7 0%, #fed7aa 50%, #fbbf24 100%); border: 3px solid #f59e0b; border-radius: 16px; padding: 15px; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);">
-                    <div style="font-size: clamp(14px, 3.5vw, 18px); font-weight: 600; color: #92400e; margin-bottom: 5px;">段位</div>
+                <div id="rankCard" style="background: linear-gradient(135deg, #fef3c7 0%, #fed7aa 50%, #fbbf24 100%); border: 3px solid #f59e0b; border-radius: 16px; padding: 15px; margin-bottom: 12px; box-shadow: 0 4px 12px rgba(245, 158, 11, 0.3);">
+                    <div id="rankLabel" style="font-size: clamp(14px, 3.5vw, 18px); font-weight: 600; color: #92400e; margin-bottom: 5px;">段位</div>
                     <div id="rankDisplay" style="font-size: clamp(32px, 8vw, 56px); font-weight: 700; color: #78350f; text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);"></div>
                 </div>
                 <div class="result-stats">
@@ -1113,6 +1194,7 @@
     <script>
         let gameMode = '';
         let timeMode = 60; // 60秒 or 180秒
+        let difficultyMode = 'normal'; // 'normal' または 'hard'
         let score = 0;
         let correctAnswers = 0;
         let wrongAnswers = 0;
@@ -1126,6 +1208,7 @@
         let consecutiveCorrect = 0;
         let maxCombo = 0; // 最大コンボ数
         let lastQuestionValues = null; // 直前の問題の値を保存
+        let answeredCurrentQuestion = false; // 現在の問題に回答済みかどうか
         let questionStartTime = 0; // 問題開始時刻
 
         // ヘルプボタン関連
@@ -1158,7 +1241,7 @@
                     <h3>公式① <span class="math">(x + a)(x + b) = x² + (a + b)x + ab</span></h3>
                     <p>「たして、かける」の公式です。</p>
                     <p><strong>使い方:</strong> 真ん中の項は「数字をたしたもの」に <span class="math">x</span> をつけ、最後の項は「数字をかけたもの」にします。</p>
-                    <div class="formula">例: (x+2)(x+3) = x² + (2+3)x + (2×3) = x² + 5x + 6</div>
+                    <div class="formula">例: (x+2)(x+3) = x² + (2+3)x + 2×3 = x² + 5x + 6</div>
 
                     <h3>公式② <span class="math">(x+a)² = x² + 2ax + a²</span></h3>
                     <p>「和の平方」の公式です。</p>
@@ -1265,12 +1348,24 @@
 
         // モードごとの係数
         function getRankCoefficient() {
-            if (gameMode === 'expand') {
-                return timeMode === 60 ? 1.5 : 4.2;
-            } else if (gameMode === 'factorize') {
-                return timeMode === 60 ? 1.2 : 3.4;
-            } else { // squareRoot
-                return timeMode === 60 ? 1.8 : 5.0;
+            if (difficultyMode === 'hard') {
+                // ハードモードの係数
+                if (gameMode === 'expand') {
+                    return timeMode === 60 ? 1.0 : 2.8;
+                } else if (gameMode === 'factorize') {
+                    return timeMode === 60 ? 1.0 : 2.8;
+                } else { // squareRoot
+                    return timeMode === 60 ? 1.25 : 3.5;
+                }
+            } else {
+                // ノーマルモードの係数
+                if (gameMode === 'expand') {
+                    return timeMode === 60 ? 1.5 : 4.2;
+                } else if (gameMode === 'factorize') {
+                    return timeMode === 60 ? 1.2 : 3.4;
+                } else { // squareRoot
+                    return timeMode === 60 ? 1.8 : 5.0;
+                }
             }
         }
 
@@ -1478,10 +1573,21 @@
                 multiplier = 1 + (0.04 * consecutiveCorrect);
             }
 
-            // 因数分解モードの時は0.8倍の速度（遅くする）
-            // 平方根モードは展開モードと同じ速度
-            if (gameMode === 'factorize') {
-                multiplier *= 0.8;
+            // モードと難易度による速度調整（数値が小さいほど遅くなる）
+            if (difficultyMode === 'hard') {
+                // ハードモード
+                if (gameMode === 'expand') {
+                    multiplier *= 0.6; // 展開ハードは0.6倍（遅い）
+                } else if (gameMode === 'factorize') {
+                    multiplier *= 0.8; // 因数分解ハードは0.8倍
+                }
+                // 平方根ハードはそのまま
+            } else {
+                // ノーマルモード
+                if (gameMode === 'factorize') {
+                    multiplier *= 0.8; // 因数分解ノーマルは0.8倍
+                }
+                // 平方根・展開ノーマルはそのまま
             }
 
             return multiplier;
@@ -1546,6 +1652,30 @@
             timeMode = time;
             document.querySelectorAll('.time-btn').forEach(btn => btn.classList.remove('active'));
             document.getElementById(`time${time}`).classList.add('active');
+        }
+
+        function selectDifficulty(difficulty) {
+            difficultyMode = difficulty;
+            document.querySelectorAll('.difficulty-btn').forEach(btn => btn.classList.remove('active'));
+            document.getElementById(`difficulty${difficulty.charAt(0).toUpperCase() + difficulty.slice(1)}`).classList.add('active');
+            // ハードモード選択時に背景を赤っぽくする
+            if (difficulty === 'hard') {
+                document.body.classList.add('hard-mode');
+            } else {
+                document.body.classList.remove('hard-mode');
+            }
+        }
+
+        // 最大公約数を計算（互いに素判定用）
+        function gcd(a, b) {
+            a = Math.abs(a);
+            b = Math.abs(b);
+            while (b !== 0) {
+                const temp = b;
+                b = a % b;
+                a = temp;
+            }
+            return a;
         }
 
         // ヘルプボタン表示
@@ -1806,6 +1936,7 @@
 
         function generateQuestion() {
             selectedAnswers = [];
+            answeredCurrentQuestion = false; // 回答済みフラグをリセット
 
             // 問題開始時刻を記録
             questionStartTime = Date.now();
@@ -1859,7 +1990,13 @@
         }
 
         function generateExpandQuestion() {
-            // 20%の確率で2乗問題を生成
+            // ハードモードで50%の確率でハード問題を出題
+            if (difficultyMode === 'hard' && Math.random() < 0.5) {
+                generateExpandHardQuestion();
+                return;
+            }
+
+            // ノーマル問題: 20%の確率で2乗問題を生成
             const isSquare = Math.random() < 0.2;
 
             let a, b;
@@ -1883,6 +2020,33 @@
             const xCoeff = a + b;
             const constant = a * b;
 
+            // ハードモードの場合は「= ____」形式で12個選択肢
+            if (difficultyMode === 'hard') {
+                let questionText;
+                if (a === b) {
+                    questionText = `(x${a >= 0 ? '+' : ''}${a})² = ____`;
+                } else {
+                    questionText = `(x${a >= 0 ? '+' : ''}${a})(x${b >= 0 ? '+' : ''}${b}) = ____`;
+                }
+
+                currentQuestion = {
+                    text: questionText,
+                    x2Coeff: 1, // x²の係数は1
+                    xCoeff: xCoeff,
+                    constant: constant,
+                    original: a === b ? `(x${a >= 0 ? '+' : ''}${a})²` : `(x${a >= 0 ? '+' : ''}${a})(x${b >= 0 ? '+' : ''}${b})`,
+                    answer: `x²${xCoeff !== 0 ? (xCoeff >= 0 ? '+' : '') + (xCoeff === 1 ? '' : xCoeff === -1 ? '-' : xCoeff) + 'x' : ''}${constant !== 0 ? (constant >= 0 ? '+' : '') + constant : ''}`,
+                    hardPattern: 6, // ノーマル形式だがハードモード用（12個選択肢）
+                    requiredSelections: xCoeff === 0 ? 2 : 3 // xCoeffが0なら2つ選択
+                };
+
+                lastQuestionValues = { a, b };
+                document.getElementById('question').innerHTML = formatMathText(questionText);
+                generateExpandHardAnswers();
+                return;
+            }
+
+            // ノーマルモードの場合
             let questionText;
             if (a === b) {
                 questionText = `(x${a >= 0 ? '+' : ''}${a})² = x²____`;
@@ -1895,7 +2059,8 @@
                 xCoeff: xCoeff,
                 constant: constant,
                 original: a === b ? `(x${a >= 0 ? '+' : ''}${a})²` : `(x${a >= 0 ? '+' : ''}${a})(x${b >= 0 ? '+' : ''}${b})`,
-                answer: `x²${xCoeff !== 0 ? (xCoeff >= 0 ? '+' : '') + (xCoeff === 1 ? '' : xCoeff === -1 ? '-' : xCoeff) + 'x' : ''}${constant !== 0 ? (constant >= 0 ? '+' : '') + constant : ''}`
+                answer: `x²${xCoeff !== 0 ? (xCoeff >= 0 ? '+' : '') + (xCoeff === 1 ? '' : xCoeff === -1 ? '-' : xCoeff) + 'x' : ''}${constant !== 0 ? (constant >= 0 ? '+' : '') + constant : ''}`,
+                hardPattern: 0 // ノーマル問題
             };
 
             // 現在の問題の値を保存
@@ -1903,6 +2068,481 @@
 
             document.getElementById('question').innerHTML = formatMathText(questionText);
             generateExpandAnswers();
+        }
+
+        // -9〜+9の0以外の整数を生成
+        function getRandomNonZeroSmall() {
+            let val;
+            do {
+                val = Math.floor(Math.random() * 19) - 9; // -9 to 9
+            } while (val === 0);
+            return val;
+        }
+
+        // 2〜5の整数を生成
+        function getRandomCoefficient() {
+            return Math.floor(Math.random() * 4) + 2; // 2 to 5
+        }
+
+        // 互いに素になるc,dのペアを生成
+        function getCoprimeCD() {
+            let c, d;
+            do {
+                c = getRandomCoefficient(); // 2〜5
+                d = getRandomNonZeroSmall(); // -9〜+9（0除外）
+            } while (gcd(c, Math.abs(d)) !== 1);
+            return { c, d };
+        }
+
+        function generateExpandHardQuestion() {
+            // 重み付きランダム選択（パターン1を3倍の確率で出題）
+            // パターン1: 重み3, パターン2-5: 重み1（合計7）
+            const rand = Math.random() * 7;
+            let pattern;
+            if (rand < 3) {
+                pattern = 1; // 約43%の確率
+            } else if (rand < 4) {
+                pattern = 2; // 約14%の確率
+            } else if (rand < 5) {
+                pattern = 3; // 約14%の確率
+            } else if (rand < 6) {
+                pattern = 4; // 約14%の確率
+            } else {
+                pattern = 5; // 約14%の確率
+            }
+
+            switch (pattern) {
+                case 1: generateExpandPattern1(); break; // (x+ay)(x+by)
+                case 2: generateExpandPattern2(); break; // (cx+d)²
+                case 3: generateExpandPattern3(); break; // (cx+dy)²
+                case 4: generateExpandPattern4(); break; // (cx+d)(cx-d)
+                case 5: generateExpandPattern5(); break; // (cx+dy)(cx-dy)
+            }
+        }
+
+        // パターン1: (x+ay)(x+by) = x² + (a+b)xy + ab·y²
+        function generateExpandPattern1() {
+            let a, b;
+            do {
+                a = getRandomNonZeroSmall();
+                b = getRandomNonZeroSmall();
+                while (b === a) {
+                    b = getRandomNonZeroSmall();
+                }
+            } while (lastQuestionValues && lastQuestionValues.pattern === 1 &&
+                     ((lastQuestionValues.a === a && lastQuestionValues.b === b) ||
+                      (lastQuestionValues.a === b && lastQuestionValues.b === a)));
+
+            const xyCoeff = a + b;
+            const y2Coeff = a * b;
+
+            const aSign = a >= 0 ? '+' : '';
+            const bSign = b >= 0 ? '+' : '';
+            const aDisplay = a === 1 ? '' : a === -1 ? '-' : a;
+            const bDisplay = b === 1 ? '' : b === -1 ? '-' : b;
+            const questionText = `(x${aSign}${aDisplay}y)(x${bSign}${bDisplay}y) = ____`;
+
+            currentQuestion = {
+                text: questionText,
+                x2Coeff: 1,
+                xyCoeff: xyCoeff,
+                y2Coeff: y2Coeff,
+                original: `(x${aSign}${aDisplay}y)(x${bSign}${bDisplay}y)`,
+                answer: `x²${xyCoeff !== 0 ? (xyCoeff >= 0 ? '+' : '') + (xyCoeff === 1 ? '' : xyCoeff === -1 ? '-' : xyCoeff) + 'xy' : ''}${y2Coeff !== 0 ? (y2Coeff >= 0 ? '+' : '') + y2Coeff + 'y²' : ''}`,
+                hardPattern: 1,
+                requiredSelections: xyCoeff === 0 ? 2 : 3 // xyCoeffが0なら2つ、そうでなければ3つ
+            };
+
+            lastQuestionValues = { pattern: 1, a, b };
+            document.getElementById('question').innerHTML = formatMathText(questionText);
+            generateExpandHardAnswers();
+        }
+
+        // パターン2: (cx+d)² = c²x² + 2cdx + d²
+        function generateExpandPattern2() {
+            let c, d;
+            do {
+                const pair = getCoprimeCD();
+                c = pair.c;
+                d = pair.d;
+            } while (lastQuestionValues && lastQuestionValues.pattern === 2 &&
+                     lastQuestionValues.c === c && lastQuestionValues.d === d);
+
+            const x2Coeff = c * c;
+            const xCoeff = 2 * c * d;
+            const constant = d * d;
+
+            const dSign = d >= 0 ? '+' : '';
+            const questionText = `(${c}x${dSign}${d})² = ____`;
+
+            currentQuestion = {
+                text: questionText,
+                x2Coeff: x2Coeff,
+                xCoeff: xCoeff,
+                constant: constant,
+                original: `(${c}x${dSign}${d})²`,
+                answer: `${x2Coeff}x²${xCoeff >= 0 ? '+' : ''}${xCoeff}x${constant >= 0 ? '+' : ''}${constant}`,
+                hardPattern: 2,
+                requiredSelections: 3 // x², x, 定数
+            };
+
+            lastQuestionValues = { pattern: 2, c, d };
+            document.getElementById('question').innerHTML = formatMathText(questionText);
+            generateExpandHardAnswers();
+        }
+
+        // パターン3: (cx+dy)² = c²x² + 2cdxy + d²y²
+        function generateExpandPattern3() {
+            let c, d;
+            do {
+                const pair = getCoprimeCD();
+                c = pair.c;
+                d = pair.d;
+            } while (lastQuestionValues && lastQuestionValues.pattern === 3 &&
+                     lastQuestionValues.c === c && lastQuestionValues.d === d);
+
+            const x2Coeff = c * c;
+            const xyCoeff = 2 * c * d;
+            const y2Coeff = d * d;
+
+            const dSign = d >= 0 ? '+' : '';
+            const dDisplay = d === 1 ? '' : d === -1 ? '-' : d;
+            const questionText = `(${c}x${dSign}${dDisplay}y)² = ____`;
+
+            currentQuestion = {
+                text: questionText,
+                x2Coeff: x2Coeff,
+                xyCoeff: xyCoeff,
+                y2Coeff: y2Coeff,
+                original: `(${c}x${dSign}${dDisplay}y)²`,
+                answer: `${x2Coeff}x²${xyCoeff >= 0 ? '+' : ''}${xyCoeff}xy+${y2Coeff}y²`,
+                hardPattern: 3,
+                requiredSelections: 3 // x², xy, y²
+            };
+
+            lastQuestionValues = { pattern: 3, c, d };
+            document.getElementById('question').innerHTML = formatMathText(questionText);
+            generateExpandHardAnswers();
+        }
+
+        // パターン4: (cx+d)(cx-d) = c²x² - d²
+        function generateExpandPattern4() {
+            let c, d;
+            do {
+                const pair = getCoprimeCD();
+                c = pair.c;
+                d = Math.abs(pair.d); // 正の値にする
+            } while (lastQuestionValues && lastQuestionValues.pattern === 4 &&
+                     lastQuestionValues.c === c && lastQuestionValues.d === d);
+
+            const x2Coeff = c * c;
+            const constant = -(d * d);
+
+            const questionText = `(${c}x+${d})(${c}x-${d}) = ____`;
+
+            currentQuestion = {
+                text: questionText,
+                x2Coeff: x2Coeff,
+                constant: constant,
+                original: `(${c}x+${d})(${c}x-${d})`,
+                answer: `${x2Coeff}x²${constant}`,
+                hardPattern: 4,
+                requiredSelections: 2 // x², 定数
+            };
+
+            lastQuestionValues = { pattern: 4, c, d };
+            document.getElementById('question').innerHTML = formatMathText(questionText);
+            generateExpandHardAnswers();
+        }
+
+        // パターン5: (cx+dy)(cx-dy) = c²x² - d²y²
+        function generateExpandPattern5() {
+            let c, d;
+            do {
+                const pair = getCoprimeCD();
+                c = pair.c;
+                d = Math.abs(pair.d); // 正の値にする
+            } while (lastQuestionValues && lastQuestionValues.pattern === 5 &&
+                     lastQuestionValues.c === c && lastQuestionValues.d === d);
+
+            const x2Coeff = c * c;
+            const y2Coeff = -(d * d);
+
+            const dDisplay = d === 1 ? '' : d;
+            const questionText = `(${c}x+${dDisplay}y)(${c}x-${dDisplay}y) = ____`;
+
+            currentQuestion = {
+                text: questionText,
+                x2Coeff: x2Coeff,
+                y2Coeff: y2Coeff,
+                original: `(${c}x+${dDisplay}y)(${c}x-${dDisplay}y)`,
+                answer: `${x2Coeff}x²${y2Coeff}y²`,
+                hardPattern: 5,
+                requiredSelections: 2 // x², y²
+            };
+
+            lastQuestionValues = { pattern: 5, c, d };
+            document.getElementById('question').innerHTML = formatMathText(questionText);
+            generateExpandHardAnswers();
+        }
+
+        function generateExpandHardAnswers() {
+            const pattern = currentQuestion.hardPattern;
+            const answerGrid = document.getElementById('answerGrid');
+            answerGrid.innerHTML = '';
+
+            // 全パターンで12個ボタン（縦4×横3）に固定
+            answerGrid.className = 'answer-grid-12';
+            generateExpandHard3ColumnAnswers(pattern);
+        }
+
+        function generateExpandHard3ColumnAnswers(pattern) {
+            const answerGrid = document.getElementById('answerGrid');
+
+            let col1Label, col2Label, col3Label;
+            let correctCol1, correctCol2, correctCol3;
+            let col2IsDummy = false; // パターン4,5,1(xy係数0)では中央列はダミー
+
+            if (pattern === 1) {
+                // (x+ay)(x+by) = x² + xyCoeff·xy + y2Coeff·y²
+                col1Label = 'x²';
+                col2Label = 'xy';
+                col3Label = 'y²';
+                correctCol1 = 1; // x²の係数は常に1
+                correctCol2 = currentQuestion.xyCoeff;
+                correctCol3 = currentQuestion.y2Coeff;
+                // xyCoeffが0の場合は中央列はダミー
+                if (correctCol2 === 0) {
+                    col2IsDummy = true;
+                    correctCol2 = null;
+                }
+            } else if (pattern === 2) {
+                // (cx+d)² = x2Coeff·x² + xCoeff·x + constant
+                col1Label = 'x²';
+                col2Label = 'x';
+                col3Label = '';
+                correctCol1 = currentQuestion.x2Coeff;
+                correctCol2 = currentQuestion.xCoeff;
+                correctCol3 = currentQuestion.constant;
+            } else if (pattern === 3) {
+                // (cx+dy)² = x2Coeff·x² + xyCoeff·xy + y2Coeff·y²
+                col1Label = 'x²';
+                col2Label = 'xy';
+                col3Label = 'y²';
+                correctCol1 = currentQuestion.x2Coeff;
+                correctCol2 = currentQuestion.xyCoeff;
+                correctCol3 = currentQuestion.y2Coeff;
+            } else if (pattern === 4) {
+                // (cx+d)(cx-d) = x2Coeff·x² - d²（中央列はダミー）
+                col1Label = 'x²';
+                col2Label = 'x'; // ダミー列
+                col3Label = '';
+                correctCol1 = currentQuestion.x2Coeff;
+                correctCol2 = null; // ダミー（選択したら不正解）
+                correctCol3 = currentQuestion.constant;
+                col2IsDummy = true;
+            } else if (pattern === 5) {
+                // (cx+dy)(cx-dy) = x2Coeff·x² - d²y²（中央列はダミー）
+                col1Label = 'x²';
+                col2Label = 'xy'; // ダミー列
+                col3Label = 'y²';
+                correctCol1 = currentQuestion.x2Coeff;
+                correctCol2 = null; // ダミー（選択したら不正解）
+                correctCol3 = currentQuestion.y2Coeff;
+                col2IsDummy = true;
+            } else { // pattern === 6 (ノーマル形式だがハードモード)
+                // (x+a)(x+b) = x² + xCoeff·x + constant
+                col1Label = 'x²';
+                col2Label = 'x';
+                col3Label = '';
+                correctCol1 = 1; // x²の係数は常に1
+                correctCol2 = currentQuestion.xCoeff;
+                correctCol3 = currentQuestion.constant;
+                // xCoeffが0の場合は中央列はダミー
+                if (correctCol2 === 0) {
+                    col2IsDummy = true;
+                    correctCol2 = null;
+                }
+            }
+
+            // 各列の選択肢を生成
+            const col1Choices = generateX2Choices(correctCol1);
+            const col2Choices = col2IsDummy
+                ? generateDummyChoicesNonZero()
+                : generateChoicesForValue(correctCol2, false);
+            const col3Choices = generateChoicesForValue(correctCol3, false);
+
+            // シャッフル
+            const col1Array = Array.from(col1Choices).sort(() => Math.random() - 0.5);
+            const col2Array = Array.from(col2Choices).sort(() => Math.random() - 0.5);
+            const col3Array = Array.from(col3Choices).sort(() => Math.random() - 0.5);
+
+            // ボタンを生成
+            for (let i = 0; i < 4; i++) {
+                // 列1（x²項 - 「+」なしで表示）
+                const btn1 = document.createElement('button');
+                btn1.className = 'answer-btn';
+                const coeff1 = col1Array[i] === 1 ? '' : col1Array[i];
+                btn1.innerHTML = formatMathText(`${coeff1}${col1Label}`);
+                btn1.setAttribute('data-type', 'col1');
+                btn1.setAttribute('data-value', col1Array[i]);
+                btn1.onclick = () => selectExpandHardAnswer(btn1, 'col1', col1Array[i]);
+                answerGrid.appendChild(btn1);
+
+                // 列2
+                const btn2 = document.createElement('button');
+                btn2.className = 'answer-btn';
+                btn2.innerHTML = formatMathText(`${col2Array[i] >= 0 ? '+' : ''}${col2Array[i] === 1 ? '' : col2Array[i] === -1 ? '-' : col2Array[i]}${col2Label}`);
+                btn2.setAttribute('data-type', 'col2');
+                btn2.setAttribute('data-value', col2Array[i]);
+                btn2.onclick = () => selectExpandHardAnswer(btn2, 'col2', col2Array[i]);
+                answerGrid.appendChild(btn2);
+
+                // 列3
+                const btn3 = document.createElement('button');
+                btn3.className = 'answer-btn';
+                if (col3Label) {
+                    // y²の係数が1や-1の場合は省略表示
+                    const coeff3Display = col3Array[i] === 1 ? '+' : col3Array[i] === -1 ? '-' : (col3Array[i] >= 0 ? '+' : '') + col3Array[i];
+                    btn3.innerHTML = formatMathText(`${coeff3Display}${col3Label}`);
+                } else {
+                    btn3.textContent = `${col3Array[i] >= 0 ? '+' : ''}${col3Array[i]}`;
+                }
+                btn3.setAttribute('data-type', 'col3');
+                btn3.setAttribute('data-value', col3Array[i]);
+                btn3.onclick = () => selectExpandHardAnswer(btn3, 'col3', col3Array[i]);
+                answerGrid.appendChild(btn3);
+            }
+        }
+
+        // x²の係数用の選択肢を生成（1桁の正の整数）
+        function generateX2Choices(correctValue) {
+            const choices = new Set([correctValue]);
+            // 1桁の正の平方数や小さい数を候補に
+            const candidates = [1, 2, 4, 9, 16, 25, 3, 5, 6, 8];
+            while (choices.size < 4) {
+                const candidate = candidates[Math.floor(Math.random() * candidates.length)];
+                if (candidate !== correctValue) {
+                    choices.add(candidate);
+                }
+            }
+            return choices;
+        }
+
+        // ダミー選択肢を生成（0を含まない）
+        function generateDummyChoicesNonZero() {
+            const choices = new Set();
+            while (choices.size < 4) {
+                const val = Math.floor(Math.random() * 19) - 9;
+                if (val !== 0) {
+                    choices.add(val);
+                }
+            }
+            return choices;
+        }
+
+        // 正解を含む4つの選択肢を生成
+        function generateChoicesForValue(correctValue, isFixed) {
+            const choices = new Set([correctValue]);
+            if (isFixed) {
+                // パターン1のx²係数は固定（1）なので、似た値を生成
+                while (choices.size < 4) {
+                    choices.add(Math.floor(Math.random() * 8) + 1); // 1〜8
+                }
+            } else {
+                while (choices.size < 4) {
+                    // 正解に近い値を生成
+                    const offset = Math.floor(Math.random() * 20) - 10;
+                    let candidate = correctValue + offset;
+                    if (candidate === 0 && correctValue !== 0) {
+                        candidate = correctValue > 0 ? 1 : -1;
+                    }
+                    choices.add(candidate);
+                }
+            }
+            return choices;
+        }
+
+        function selectExpandHardAnswer(button, type, value) {
+            // 同じ列の他のボタンの選択を解除
+            document.querySelectorAll('.answer-btn').forEach(btn => {
+                if (btn !== button && btn.getAttribute('data-type') === type && btn.classList.contains('selected')) {
+                    btn.classList.remove('selected');
+                }
+            });
+
+            button.classList.toggle('selected');
+
+            if (button.classList.contains('selected')) {
+                selectedAnswers = selectedAnswers.filter(ans => ans.type !== type);
+                selectedAnswers.push({ type, value });
+            } else {
+                selectedAnswers = selectedAnswers.filter(ans => !(ans.type === type && ans.value === value));
+            }
+
+            checkExpandHardAnswer();
+        }
+
+        function checkExpandHardAnswer() {
+            const pattern = currentQuestion.hardPattern;
+            let correctValues = {};
+
+            if (pattern === 1) {
+                // xyCoeffが0の場合はcol2はダミー
+                if (currentQuestion.xyCoeff === 0) {
+                    correctValues = { col1: 1, col3: currentQuestion.y2Coeff };
+                } else {
+                    correctValues = { col1: 1, col2: currentQuestion.xyCoeff, col3: currentQuestion.y2Coeff };
+                }
+            } else if (pattern === 2) {
+                correctValues = { col1: currentQuestion.x2Coeff, col2: currentQuestion.xCoeff, col3: currentQuestion.constant };
+            } else if (pattern === 3) {
+                correctValues = { col1: currentQuestion.x2Coeff, col2: currentQuestion.xyCoeff, col3: currentQuestion.y2Coeff };
+            } else if (pattern === 4) {
+                // パターン4: col2はダミー（選択したら不正解）、col3が定数
+                correctValues = { col1: currentQuestion.x2Coeff, col3: currentQuestion.constant };
+            } else if (pattern === 5) {
+                // パターン5: col2はダミー（選択したら不正解）、col3がy²係数
+                correctValues = { col1: currentQuestion.x2Coeff, col3: currentQuestion.y2Coeff };
+            } else { // pattern === 6 (ノーマル形式だがハードモード)
+                // (x+a)(x+b) = x² + xCoeff·x + constant
+                if (currentQuestion.xCoeff === 0) {
+                    // xCoeffが0の場合はcol2はダミー
+                    correctValues = { col1: 1, col3: currentQuestion.constant };
+                } else {
+                    correctValues = { col1: 1, col2: currentQuestion.xCoeff, col3: currentQuestion.constant };
+                }
+            }
+
+            // 中間正解音のチェック
+            if (selectedAnswers.length === 1) {
+                const ans = selectedAnswers[0];
+                if (correctValues[ans.type] === ans.value) {
+                    playSound(partialCorrectSound);
+                }
+            } else if (selectedAnswers.length === 2 && currentQuestion.requiredSelections === 3) {
+                // 3つ必要な問題で2つ目が正解の場合
+                const allCorrectSoFar = selectedAnswers.every(ans => correctValues[ans.type] === ans.value);
+                if (allCorrectSoFar) {
+                    playSound(partialCorrectSound);
+                }
+            }
+
+            // 不正解チェック（correctValuesに存在しないcol2を選択した場合も不正解）
+            const hasWrong = selectedAnswers.some(ans => correctValues[ans.type] !== ans.value);
+            if (hasWrong) {
+                wrongAnswer();
+                return;
+            }
+
+            // 正解チェック
+            const requiredCount = currentQuestion.requiredSelections;
+            if (selectedAnswers.length === requiredCount) {
+                const allCorrect = selectedAnswers.every(ans => correctValues[ans.type] === ans.value);
+                if (allCorrect) {
+                    correctAnswer();
+                }
+            }
         }
 
         function generateExpandAnswers() {
@@ -2033,7 +2673,13 @@
         }
 
         function generateFactorizeQuestion() {
-            // 20%の確率で2乗の答えになる問題を生成
+            // ハードモードで50%の確率でハード問題を出題
+            if (difficultyMode === 'hard' && Math.random() < 0.5) {
+                generateFactorizeHardQuestion();
+                return;
+            }
+
+            // ノーマル問題: 20%の確率で2乗の答えになる問題を生成
             const isSquare = Math.random() < 0.2;
 
             let p, q;
@@ -2064,7 +2710,8 @@
                 p: p,
                 q: q,
                 original: `x²${xCoeff !== 0 ? (xCoeff >= 0 ? '+' : '') + (xCoeff === 1 ? '' : xCoeff === -1 ? '-' : xCoeff) + 'x' : ''}${constant >= 0 ? '+' : ''}${constant}`,
-                answer: p === q ? `(x${p >= 0 ? '+' : ''}${p})²` : `(x${p >= 0 ? '+' : ''}${p})(x${q >= 0 ? '+' : ''}${q})`
+                answer: p === q ? `(x${p >= 0 ? '+' : ''}${p})²` : `(x${p >= 0 ? '+' : ''}${p})(x${q >= 0 ? '+' : ''}${q})`,
+                hardPattern: 0 // ノーマル問題
             };
 
             // 現在の問題の値を保存
@@ -2072,6 +2719,635 @@
 
             document.getElementById('question').innerHTML = formatMathText(questionText);
             generateFactorizeAnswers();
+        }
+
+        function generateFactorizeHardQuestion() {
+            // 重み付きランダム選択（パターン1を3倍の確率で出題）
+            // パターン1: 重み3, パターン2-5: 重み1（合計7）
+            const rand = Math.random() * 7;
+            let pattern;
+            if (rand < 3) {
+                pattern = 1; // 約43%の確率
+            } else if (rand < 4) {
+                pattern = 2; // 約14%の確率
+            } else if (rand < 5) {
+                pattern = 3; // 約14%の確率
+            } else if (rand < 6) {
+                pattern = 4; // 約14%の確率
+            } else {
+                pattern = 5; // 約14%の確率
+            }
+
+            switch (pattern) {
+                case 1: generateFactorizePattern1(); break; // x²+(a+b)xy+ab·y² = (x+ay)(x+by)
+                case 2: generateFactorizePattern2(); break; // c²x²+2cdx+d² = (cx+d)²
+                case 3: generateFactorizePattern3(); break; // c²x²+2cdxy+d²y² = (cx+dy)²
+                case 4: generateFactorizePattern4(); break; // c²x²-d² = (cx+d)(cx-d)
+                case 5: generateFactorizePattern5(); break; // c²x²-d²y² = (cx+dy)(cx-dy)
+            }
+        }
+
+        // 因数分解パターン1: x²+(a+b)xy+ab·y² = (x+ay)(x+by)
+        function generateFactorizePattern1() {
+            let a, b;
+            do {
+                a = getRandomNonZeroSmall();
+                b = getRandomNonZeroSmall();
+                while (b === a) {
+                    b = getRandomNonZeroSmall();
+                }
+            } while (lastQuestionValues && lastQuestionValues.pattern === 1 &&
+                     ((lastQuestionValues.a === a && lastQuestionValues.b === b) ||
+                      (lastQuestionValues.a === b && lastQuestionValues.b === a)));
+
+            const xyCoeff = a + b;
+            const y2Coeff = a * b;
+
+            let questionText = `x²`;
+            if (xyCoeff !== 0) {
+                questionText += `${xyCoeff >= 0 ? '+' : ''}${xyCoeff === 1 ? '' : xyCoeff === -1 ? '-' : xyCoeff}xy`;
+            }
+            // y²係数が1の場合は省略
+            const y2Display = y2Coeff === 1 ? '+' : y2Coeff === -1 ? '-' : (y2Coeff >= 0 ? '+' : '') + y2Coeff;
+            questionText += `${y2Display}y² = ______`;
+
+            // y係数が1や-1の場合は省略表示
+            const aDisplay = a === 1 ? '+' : a === -1 ? '-' : (a >= 0 ? '+' : '') + a;
+            const bDisplay = b === 1 ? '+' : b === -1 ? '-' : (b >= 0 ? '+' : '') + b;
+
+            currentQuestion = {
+                text: questionText,
+                a: a,
+                b: b,
+                original: questionText.replace(' = ______', ''),
+                answer: `(x${aDisplay}y)(x${bDisplay}y)`,
+                hardPattern: 1,
+                hasY: true
+            };
+
+            lastQuestionValues = { pattern: 1, a, b };
+            document.getElementById('question').innerHTML = formatMathText(questionText);
+            generateFactorizeHardAnswers();
+        }
+
+        // 因数分解パターン2: c²x²+2cdx+d² = (cx+d)²
+        function generateFactorizePattern2() {
+            let c, d;
+            do {
+                const pair = getCoprimeCD();
+                c = pair.c;
+                d = pair.d;
+            } while (lastQuestionValues && lastQuestionValues.pattern === 2 &&
+                     lastQuestionValues.c === c && lastQuestionValues.d === d);
+
+            const x2Coeff = c * c;
+            const xCoeff = 2 * c * d;
+            const constant = d * d;
+
+            const questionText = `${x2Coeff}x²${xCoeff >= 0 ? '+' : ''}${xCoeff}x+${constant} = ______`;
+            const dSign = d >= 0 ? '+' : '';
+
+            currentQuestion = {
+                text: questionText,
+                c: c,
+                d: d,
+                original: questionText.replace(' = ______', ''),
+                answer: `(${c}x${dSign}${d})²`,
+                hardPattern: 2,
+                isSquareAnswer: true,
+                hasY: false
+            };
+
+            lastQuestionValues = { pattern: 2, c, d };
+            document.getElementById('question').innerHTML = formatMathText(questionText);
+            generateFactorizeHardAnswers();
+        }
+
+        // 因数分解パターン3: c²x²+2cdxy+d²y² = (cx+dy)²
+        function generateFactorizePattern3() {
+            let c, d;
+            do {
+                const pair = getCoprimeCD();
+                c = pair.c;
+                d = pair.d;
+            } while (lastQuestionValues && lastQuestionValues.pattern === 3 &&
+                     lastQuestionValues.c === c && lastQuestionValues.d === d);
+
+            const x2Coeff = c * c;
+            const xyCoeff = 2 * c * d;
+            const y2Coeff = d * d;
+
+            // y²係数が1の場合は省略
+            const y2Display = y2Coeff === 1 ? '+' : '+' + y2Coeff;
+            const questionText = `${x2Coeff}x²${xyCoeff >= 0 ? '+' : ''}${xyCoeff}xy${y2Display}y² = ______`;
+            // y係数が1や-1の場合は省略表示
+            const dDisplay = d === 1 ? '+' : d === -1 ? '-' : (d >= 0 ? '+' : '') + d;
+
+            currentQuestion = {
+                text: questionText,
+                c: c,
+                d: d,
+                original: questionText.replace(' = ______', ''),
+                answer: `(${c}x${dDisplay}y)²`,
+                hardPattern: 3,
+                isSquareAnswer: true,
+                hasY: true
+            };
+
+            lastQuestionValues = { pattern: 3, c, d };
+            document.getElementById('question').innerHTML = formatMathText(questionText);
+            generateFactorizeHardAnswers();
+        }
+
+        // 因数分解パターン4: c²x²-d² = (cx+d)(cx-d)
+        function generateFactorizePattern4() {
+            let c, d;
+            do {
+                const pair = getCoprimeCD();
+                c = pair.c;
+                d = Math.abs(pair.d);
+            } while (lastQuestionValues && lastQuestionValues.pattern === 4 &&
+                     lastQuestionValues.c === c && lastQuestionValues.d === d);
+
+            const x2Coeff = c * c;
+            const constant = d * d;
+
+            const questionText = `${x2Coeff}x²-${constant} = ______`;
+
+            currentQuestion = {
+                text: questionText,
+                c: c,
+                d: d,
+                original: questionText.replace(' = ______', ''),
+                answer: `(${c}x+${d})(${c}x-${d})`,
+                hardPattern: 4,
+                isDifference: true,
+                hasY: false
+            };
+
+            lastQuestionValues = { pattern: 4, c, d };
+            document.getElementById('question').innerHTML = formatMathText(questionText);
+            generateFactorizeHardAnswers();
+        }
+
+        // 因数分解パターン5: c²x²-d²y² = (cx+dy)(cx-dy)
+        function generateFactorizePattern5() {
+            let c, d;
+            do {
+                const pair = getCoprimeCD();
+                c = pair.c;
+                d = Math.abs(pair.d);
+            } while (lastQuestionValues && lastQuestionValues.pattern === 5 &&
+                     lastQuestionValues.c === c && lastQuestionValues.d === d);
+
+            const x2Coeff = c * c;
+            const y2Coeff = d * d;
+
+            // y²係数が1の場合は省略
+            const y2Display = y2Coeff === 1 ? '' : y2Coeff;
+            const questionText = `${x2Coeff}x²-${y2Display}y² = ______`;
+            // y係数が1の場合は省略表示
+            const dDisplay = d === 1 ? '' : d;
+
+            currentQuestion = {
+                text: questionText,
+                c: c,
+                d: d,
+                original: questionText.replace(' = ______', ''),
+                answer: `(${c}x+${dDisplay}y)(${c}x-${dDisplay}y)`,
+                hardPattern: 5,
+                isDifference: true,
+                hasY: true
+            };
+
+            lastQuestionValues = { pattern: 5, c, d };
+            document.getElementById('question').innerHTML = formatMathText(questionText);
+            generateFactorizeHardAnswers();
+        }
+
+        function generateFactorizeHardAnswers() {
+            const pattern = currentQuestion.hardPattern;
+            const answerGrid = document.getElementById('answerGrid');
+            answerGrid.innerHTML = '';
+            answerGrid.className = 'factors-grid';
+
+            if (pattern === 1) {
+                // (x+ay)(x+by) 形式 - 2つ選択
+                generateFactorizePattern1Answers();
+            } else if (pattern === 2 || pattern === 3) {
+                // (cx+d)² または (cx+dy)² 形式 - 1つ+²選択
+                generateFactorizeSquareAnswers();
+            } else {
+                // (cx+d)(cx-d) または (cx+dy)(cx-dy) 形式 - 2つ選択
+                generateFactorizeDifferenceAnswers();
+            }
+        }
+
+        function generateFactorizePattern1Answers() {
+            // (x+ay)(x+by) 形式の解答選択肢
+            const correctA = currentQuestion.a;
+            const correctB = currentQuestion.b;
+
+            // 左右にランダムに振り分け
+            const leftCorrect = Math.random() < 0.5 ? correctA : correctB;
+            const rightCorrect = leftCorrect === correctA ? correctB : correctA;
+
+            // 左側の選択肢
+            const leftChoices = new Set([leftCorrect]);
+            while (leftChoices.size < 4) {
+                const candidate = getRandomNonZeroSmall();
+                if (candidate !== correctA && candidate !== correctB) {
+                    leftChoices.add(candidate);
+                }
+            }
+
+            // 右側の選択肢
+            const rightChoices = new Set([rightCorrect]);
+            while (rightChoices.size < 3) {
+                const candidate = getRandomNonZeroSmall();
+                if (candidate !== correctA && candidate !== correctB && !leftChoices.has(candidate)) {
+                    rightChoices.add(candidate);
+                }
+            }
+
+            const leftArray = Array.from(leftChoices).sort(() => Math.random() - 0.5);
+            const rightArray = Array.from(rightChoices).sort(() => Math.random() - 0.5);
+
+            const answerGrid = document.getElementById('answerGrid');
+
+            for (let i = 0; i < 4; i++) {
+                // 左側
+                const leftBtn = document.createElement('button');
+                leftBtn.className = 'answer-btn';
+                // y係数が1や-1の場合は省略表示
+                const leftCoeffDisplay = leftArray[i] === 1 ? '+' : leftArray[i] === -1 ? '-' : (leftArray[i] >= 0 ? '+' : '') + leftArray[i];
+                leftBtn.innerHTML = formatMathText(`(x${leftCoeffDisplay}y)`);
+                leftBtn.setAttribute('data-position', 'left');
+                leftBtn.setAttribute('data-value', leftArray[i]);
+                leftBtn.onclick = () => selectFactorizeHardAnswer(leftBtn, leftArray[i], 'pattern1');
+                answerGrid.appendChild(leftBtn);
+
+                // 右側
+                if (i < 3) {
+                    const rightBtn = document.createElement('button');
+                    rightBtn.className = 'answer-btn';
+                    // y係数が1や-1の場合は省略表示
+                    const rightCoeffDisplay = rightArray[i] === 1 ? '+' : rightArray[i] === -1 ? '-' : (rightArray[i] >= 0 ? '+' : '') + rightArray[i];
+                    rightBtn.innerHTML = formatMathText(`(x${rightCoeffDisplay}y)`);
+                    rightBtn.setAttribute('data-position', 'right');
+                    rightBtn.setAttribute('data-value', rightArray[i]);
+                    rightBtn.onclick = () => selectFactorizeHardAnswer(rightBtn, rightArray[i], 'pattern1');
+                    answerGrid.appendChild(rightBtn);
+                } else {
+                    // 右下に²ボタン（使わないがUIの統一性のため配置）
+                    const squareBtn = document.createElement('button');
+                    squareBtn.className = 'answer-btn';
+                    squareBtn.textContent = '²';
+                    squareBtn.setAttribute('data-position', 'right');
+                    squareBtn.setAttribute('data-value', 'square');
+                    squareBtn.onclick = () => selectFactorizeHardSquare(squareBtn);
+                    answerGrid.appendChild(squareBtn);
+                }
+            }
+        }
+
+        function generateFactorizeSquareAnswers() {
+            // (cx+d)² または (cx+dy)² 形式
+            const correctC = currentQuestion.c;
+            const correctD = currentQuestion.d;
+            const hasY = currentQuestion.hasY;
+
+            // 左側: (cx+d) または (cx+dy) 形式の選択肢
+            const leftChoices = [{ c: correctC, d: correctD }];
+            while (leftChoices.length < 4) {
+                let newC, newD;
+                do {
+                    const pair = getCoprimeCD();
+                    newC = pair.c;
+                    newD = pair.d;
+                } while (leftChoices.some(ch => ch.c === newC && ch.d === newD));
+                leftChoices.push({ c: newC, d: newD });
+            }
+
+            // シャッフル
+            leftChoices.sort(() => Math.random() - 0.5);
+
+            // 右側: ダミーの選択肢（正解は²ボタン）
+            const rightChoices = [];
+            while (rightChoices.length < 3) {
+                let newC, newD;
+                do {
+                    const pair = getCoprimeCD();
+                    newC = pair.c;
+                    newD = pair.d;
+                } while (rightChoices.some(ch => ch.c === newC && ch.d === newD) ||
+                         leftChoices.some(ch => ch.c === newC && ch.d === newD));
+                rightChoices.push({ c: newC, d: newD });
+            }
+
+            const answerGrid = document.getElementById('answerGrid');
+
+            for (let i = 0; i < 4; i++) {
+                // 左側
+                const leftBtn = document.createElement('button');
+                leftBtn.className = 'answer-btn';
+                const lc = leftChoices[i].c;
+                const ld = leftChoices[i].d;
+                if (hasY) {
+                    // y係数が1や-1の場合は省略表示
+                    const ldDisplay = ld === 1 ? '+' : ld === -1 ? '-' : (ld >= 0 ? '+' : '') + ld;
+                    leftBtn.innerHTML = formatMathText(`(${lc}x${ldDisplay}y)`);
+                } else {
+                    const ldSign = ld >= 0 ? '+' : '';
+                    leftBtn.innerHTML = formatMathText(`(${lc}x${ldSign}${ld})`);
+                }
+                leftBtn.setAttribute('data-position', 'left');
+                leftBtn.setAttribute('data-c', lc);
+                leftBtn.setAttribute('data-d', ld);
+                leftBtn.onclick = () => selectFactorizeHardAnswer(leftBtn, { c: lc, d: ld }, 'square');
+                answerGrid.appendChild(leftBtn);
+
+                // 右側
+                if (i < 3) {
+                    const rightBtn = document.createElement('button');
+                    rightBtn.className = 'answer-btn';
+                    const rc = rightChoices[i].c;
+                    const rd = rightChoices[i].d;
+                    if (hasY) {
+                        // y係数が1や-1の場合は省略表示
+                        const rdDisplay = rd === 1 ? '+' : rd === -1 ? '-' : (rd >= 0 ? '+' : '') + rd;
+                        rightBtn.innerHTML = formatMathText(`(${rc}x${rdDisplay}y)`);
+                    } else {
+                        const rdSign = rd >= 0 ? '+' : '';
+                        rightBtn.innerHTML = formatMathText(`(${rc}x${rdSign}${rd})`);
+                    }
+                    rightBtn.setAttribute('data-position', 'right');
+                    rightBtn.setAttribute('data-c', rc);
+                    rightBtn.setAttribute('data-d', rd);
+                    rightBtn.onclick = () => selectFactorizeHardAnswer(rightBtn, { c: rc, d: rd }, 'square');
+                    answerGrid.appendChild(rightBtn);
+                } else {
+                    // ²ボタン
+                    const squareBtn = document.createElement('button');
+                    squareBtn.className = 'answer-btn';
+                    squareBtn.textContent = '²';
+                    squareBtn.setAttribute('data-position', 'right');
+                    squareBtn.setAttribute('data-value', 'square');
+                    squareBtn.onclick = () => selectFactorizeHardSquare(squareBtn);
+                    answerGrid.appendChild(squareBtn);
+                }
+            }
+        }
+
+        function generateFactorizeDifferenceAnswers() {
+            // (cx+d)(cx-d) または (cx+dy)(cx-dy) 形式
+            const correctC = currentQuestion.c;
+            const correctD = currentQuestion.d;
+            const hasY = currentQuestion.hasY;
+
+            // 正解のペア: (cx+d) と (cx-d)
+            // 左右にランダムに振り分け
+            const isLeftPlus = Math.random() < 0.5;
+
+            // 左側の選択肢
+            const leftChoices = [{ c: correctC, d: isLeftPlus ? correctD : -correctD, isCorrect: true }];
+            while (leftChoices.length < 4) {
+                let newC, newD;
+                do {
+                    const pair = getCoprimeCD();
+                    newC = pair.c;
+                    newD = pair.d;
+                } while (leftChoices.some(ch => ch.c === newC && Math.abs(ch.d) === Math.abs(newD)));
+                leftChoices.push({ c: newC, d: newD, isCorrect: false });
+            }
+
+            // 右側の選択肢
+            const rightChoices = [{ c: correctC, d: isLeftPlus ? -correctD : correctD, isCorrect: true }];
+            while (rightChoices.length < 3) {
+                let newC, newD;
+                do {
+                    const pair = getCoprimeCD();
+                    newC = pair.c;
+                    newD = pair.d;
+                } while (rightChoices.some(ch => ch.c === newC && Math.abs(ch.d) === Math.abs(newD)) ||
+                         leftChoices.some(ch => ch.c === newC && Math.abs(ch.d) === Math.abs(newD)));
+                rightChoices.push({ c: newC, d: newD, isCorrect: false });
+            }
+
+            // シャッフル
+            leftChoices.sort(() => Math.random() - 0.5);
+            rightChoices.sort(() => Math.random() - 0.5);
+
+            const answerGrid = document.getElementById('answerGrid');
+
+            for (let i = 0; i < 4; i++) {
+                // 左側
+                const leftBtn = document.createElement('button');
+                leftBtn.className = 'answer-btn';
+                const lc = leftChoices[i].c;
+                const ld = leftChoices[i].d;
+                if (hasY) {
+                    // y係数が1や-1の場合は省略表示
+                    const ldDisplay = ld === 1 ? '+' : ld === -1 ? '-' : (ld >= 0 ? '+' : '') + ld;
+                    leftBtn.innerHTML = formatMathText(`(${lc}x${ldDisplay}y)`);
+                } else {
+                    const ldSign = ld >= 0 ? '+' : '';
+                    leftBtn.innerHTML = formatMathText(`(${lc}x${ldSign}${ld})`);
+                }
+                leftBtn.setAttribute('data-position', 'left');
+                leftBtn.setAttribute('data-c', lc);
+                leftBtn.setAttribute('data-d', ld);
+                leftBtn.setAttribute('data-correct', leftChoices[i].isCorrect);
+                leftBtn.onclick = () => selectFactorizeHardAnswer(leftBtn, { c: lc, d: ld }, 'difference');
+                answerGrid.appendChild(leftBtn);
+
+                // 右側
+                if (i < 3) {
+                    const rightBtn = document.createElement('button');
+                    rightBtn.className = 'answer-btn';
+                    const rc = rightChoices[i].c;
+                    const rd = rightChoices[i].d;
+                    if (hasY) {
+                        // y係数が1や-1の場合は省略表示
+                        const rdDisplay = rd === 1 ? '+' : rd === -1 ? '-' : (rd >= 0 ? '+' : '') + rd;
+                        rightBtn.innerHTML = formatMathText(`(${rc}x${rdDisplay}y)`);
+                    } else {
+                        const rdSign = rd >= 0 ? '+' : '';
+                        rightBtn.innerHTML = formatMathText(`(${rc}x${rdSign}${rd})`);
+                    }
+                    rightBtn.setAttribute('data-position', 'right');
+                    rightBtn.setAttribute('data-c', rc);
+                    rightBtn.setAttribute('data-d', rd);
+                    rightBtn.setAttribute('data-correct', rightChoices[i].isCorrect);
+                    rightBtn.onclick = () => selectFactorizeHardAnswer(rightBtn, { c: rc, d: rd }, 'difference');
+                    answerGrid.appendChild(rightBtn);
+                } else {
+                    // ²ボタン（差の積では使わない）
+                    const squareBtn = document.createElement('button');
+                    squareBtn.className = 'answer-btn';
+                    squareBtn.textContent = '²';
+                    squareBtn.setAttribute('data-position', 'right');
+                    squareBtn.setAttribute('data-value', 'square');
+                    squareBtn.onclick = () => selectFactorizeHardSquare(squareBtn);
+                    answerGrid.appendChild(squareBtn);
+                }
+            }
+        }
+
+        function selectFactorizeHardAnswer(button, value, answerType) {
+            const pattern = currentQuestion.hardPattern;
+
+            if (answerType === 'pattern1') {
+                // (x+ay)(x+by) 形式 - 2つ選択
+                if (selectedAnswers.find(ans => ans.value === value)) {
+                    selectedAnswers = selectedAnswers.filter(ans => ans.value !== value);
+                    button.classList.remove('selected');
+                } else if (selectedAnswers.filter(ans => !ans.isSquare).length < 2) {
+                    selectedAnswers.push({ value, isSquare: false });
+                    button.classList.add('selected');
+                }
+            } else if (answerType === 'square') {
+                // (cx+d)² 形式 - 1つ選択
+                // 他の非²ボタンの選択を解除
+                document.querySelectorAll('.answer-btn').forEach(btn => {
+                    if (btn !== button && btn.getAttribute('data-value') !== 'square' && btn.classList.contains('selected')) {
+                        btn.classList.remove('selected');
+                    }
+                });
+                selectedAnswers = selectedAnswers.filter(ans => ans.isSquare);
+
+                if (button.classList.contains('selected')) {
+                    button.classList.remove('selected');
+                } else {
+                    button.classList.add('selected');
+                    selectedAnswers.push({ value, isSquare: false });
+                }
+            } else if (answerType === 'difference') {
+                // (cx+d)(cx-d) 形式 - 2つ選択
+                if (selectedAnswers.find(ans => ans.value && ans.value.c === value.c && ans.value.d === value.d)) {
+                    selectedAnswers = selectedAnswers.filter(ans => !(ans.value && ans.value.c === value.c && ans.value.d === value.d));
+                    button.classList.remove('selected');
+                } else if (selectedAnswers.filter(ans => !ans.isSquare).length < 2) {
+                    selectedAnswers.push({ value, isSquare: false });
+                    button.classList.add('selected');
+                }
+            }
+
+            checkFactorizeHardAnswer();
+        }
+
+        function selectFactorizeHardSquare(button) {
+            const hasSquare = selectedAnswers.some(ans => ans.isSquare);
+
+            if (hasSquare) {
+                selectedAnswers = selectedAnswers.filter(ans => !ans.isSquare);
+                button.classList.remove('selected');
+            } else {
+                selectedAnswers.push({ value: 'square', isSquare: true });
+                button.classList.add('selected');
+            }
+
+            checkFactorizeHardAnswer();
+        }
+
+        function checkFactorizeHardAnswer() {
+            const pattern = currentQuestion.hardPattern;
+
+            if (pattern === 1) {
+                // (x+ay)(x+by) 形式
+                const correctA = currentQuestion.a;
+                const correctB = currentQuestion.b;
+                const nonSquareAnswers = selectedAnswers.filter(ans => !ans.isSquare);
+
+                // 1つ選択で正解なら中間音
+                if (nonSquareAnswers.length === 1) {
+                    const val = nonSquareAnswers[0].value;
+                    if (val === correctA || val === correctB) {
+                        playSound(partialCorrectSound);
+                    } else {
+                        wrongAnswer();
+                        return;
+                    }
+                }
+
+                // 2つ選択で判定
+                if (nonSquareAnswers.length === 2) {
+                    const values = nonSquareAnswers.map(ans => ans.value);
+                    if (values.includes(correctA) && values.includes(correctB)) {
+                        correctAnswer();
+                    } else {
+                        wrongAnswer();
+                    }
+                }
+
+                // ²ボタンを押したら不正解
+                if (selectedAnswers.some(ans => ans.isSquare)) {
+                    wrongAnswer();
+                }
+
+            } else if (pattern === 2 || pattern === 3) {
+                // (cx+d)² または (cx+dy)² 形式
+                const correctC = currentQuestion.c;
+                const correctD = currentQuestion.d;
+                const hasSquare = selectedAnswers.some(ans => ans.isSquare);
+                const nonSquareAnswers = selectedAnswers.filter(ans => !ans.isSquare);
+
+                if (nonSquareAnswers.length === 1 && !hasSquare) {
+                    const val = nonSquareAnswers[0].value;
+                    if (val.c === correctC && val.d === correctD) {
+                        playSound(partialCorrectSound);
+                    }
+                }
+
+                if (nonSquareAnswers.length === 1 && hasSquare) {
+                    const val = nonSquareAnswers[0].value;
+                    if (val.c === correctC && val.d === correctD) {
+                        correctAnswer();
+                    } else {
+                        wrongAnswer();
+                    }
+                }
+
+                // 2つの非²選択は不正解
+                if (nonSquareAnswers.length >= 2) {
+                    wrongAnswer();
+                }
+
+            } else if (pattern === 4 || pattern === 5) {
+                // (cx+d)(cx-d) 形式
+                const correctC = currentQuestion.c;
+                const correctD = currentQuestion.d;
+                const nonSquareAnswers = selectedAnswers.filter(ans => !ans.isSquare);
+
+                // 1つ選択で正解なら中間音
+                if (nonSquareAnswers.length === 1) {
+                    const val = nonSquareAnswers[0].value;
+                    if (val.c === correctC && Math.abs(val.d) === correctD) {
+                        playSound(partialCorrectSound);
+                    } else {
+                        wrongAnswer();
+                        return;
+                    }
+                }
+
+                // 2つ選択で判定
+                if (nonSquareAnswers.length === 2) {
+                    const vals = nonSquareAnswers.map(ans => ans.value);
+                    // 両方がcorrectCで、dが+correctDと-correctDであること
+                    const hasPlus = vals.some(v => v.c === correctC && v.d === correctD);
+                    const hasMinus = vals.some(v => v.c === correctC && v.d === -correctD);
+                    if (hasPlus && hasMinus) {
+                        correctAnswer();
+                    } else {
+                        wrongAnswer();
+                    }
+                }
+
+                // ²ボタンを押したら不正解
+                if (selectedAnswers.some(ans => ans.isSquare)) {
+                    wrongAnswer();
+                }
+            }
         }
 
         function generateFactorizeAnswers() {
@@ -2228,6 +3504,12 @@
         }
 
         function correctAnswer() {
+            // すでに回答済みの場合は処理しない（複数回カウントを防止）
+            if (answeredCurrentQuestion) {
+                return;
+            }
+            answeredCurrentQuestion = true;
+
             // ヘルプボタンを非表示にし、タイマーをクリア
             hideHelpButton();
 
@@ -2327,6 +3609,12 @@
         }
 
         function wrongAnswer() {
+            // すでに回答済みの場合は処理しない（複数回カウントを防止）
+            if (answeredCurrentQuestion) {
+                return;
+            }
+            answeredCurrentQuestion = true;
+
             // ヘルプボタンを非表示にし、タイマーをクリア
             hideHelpButton();
 
@@ -2411,7 +3699,7 @@
             // ゲーム終了時のジングルを再生
             playSound(gameOverJingle);
 
-            const highScoreKey = `highScore_${gameMode}_${timeMode}`;
+            const highScoreKey = `highScore_${gameMode}_${timeMode}_${difficultyMode}`;
             const currentHighScore = parseInt(localStorage.getItem(highScoreKey) || '0');
             const newHighScore = Math.max(score, currentHighScore);
             localStorage.setItem(highScoreKey, newHighScore.toString());
@@ -2419,8 +3707,28 @@
             // 段位を計算して表示
             const rank = calculateRank(correctAnswers, wrongAnswers);
             const modeName = getModeName();
+            const difficultyName = difficultyMode === 'hard' ? 'ハード' : '';
             const plusMark = timeMode === 180 ? '＋' : '';
-            document.getElementById('rankDisplay').textContent = `${modeName} ${rank}${plusMark}`;
+            document.getElementById('rankDisplay').textContent = `${modeName}${difficultyName} ${rank}${plusMark}`;
+
+            // 段位カードの色を設定
+            const rankCard = document.getElementById('rankCard');
+            const rankLabel = document.getElementById('rankLabel');
+            if (difficultyMode === 'hard') {
+                // ハードモード: 赤系グラデーション
+                rankCard.style.background = 'linear-gradient(135deg, #fecaca 0%, #fca5a5 50%, #ef4444 100%)';
+                rankCard.style.borderColor = '#dc2626';
+                rankCard.style.boxShadow = '0 4px 12px rgba(220, 38, 38, 0.3)';
+                rankLabel.style.color = '#7f1d1d';
+                document.getElementById('rankDisplay').style.color = '#7f1d1d';
+            } else {
+                // ノーマルモード: 黄色系グラデーション（デフォルト）
+                rankCard.style.background = 'linear-gradient(135deg, #fef3c7 0%, #fed7aa 50%, #fbbf24 100%)';
+                rankCard.style.borderColor = '#f59e0b';
+                rankCard.style.boxShadow = '0 4px 12px rgba(245, 158, 11, 0.3)';
+                rankLabel.style.color = '#92400e';
+                document.getElementById('rankDisplay').style.color = '#78350f';
+            }
 
             document.getElementById('correctCount').textContent = correctAnswers;
             document.getElementById('wrongCount').textContent = wrongAnswers;
@@ -2528,7 +3836,8 @@
 
         // xを数学的フォントで表示するためのヘルパー関数
         function formatMathText(text) {
-            return text.replace(/x/g, '<span class="math-x">x</span>');
+            return text.replace(/x/g, '<span class="math-x">x</span>')
+                       .replace(/y/g, '<span class="math-x">y</span>');
         }
 
         // √記号を数学用フォントで表示するヘルパー関数
@@ -2543,7 +3852,11 @@
 
         // テキスト内の√記号を適切な形式に変換する関数
         function formatTextWithSquareRoot(text) {
-            // √の後の数字を抽出して適切に表示
+            // 分数形式（例: "9/√3"）を検出して分数表示に変換
+            text = text.replace(/(\d+)\/√(\d+)/g, (match, numerator, denominator) => {
+                return `<span class="history-fraction"><span class="numerator">${numerator}</span><span class="denominator">${formatSquareRoot(denominator)}</span></span>`;
+            });
+            // √の後の数字を抽出して適切に表示（分数内で既に処理されたものは除く）
             return text.replace(/√(\d+)/g, (match, number) => formatSquareRoot(number));
         }
 
@@ -2640,7 +3953,7 @@
             return { a, b };
         }
 
-        // 平方数の因数を含む8-100の数をランダム生成
+        // 平方数の因数を含む8-100の数をランダム生成（√の中身は17未満に制限）
         function getRandomSquareRootNumber() {
             const shouldBeHighB = Math.random() < 0.2; // 20%の確率でb≧11
             let num;
@@ -2651,23 +3964,24 @@
                 num = Math.floor(Math.random() * 93) + 8; // 8から100までの整数
                 const simplified = simplifySquareRoot(num);
 
-                // 平方数の因数を含む（a > 1が必須）数で、かつb≧11またはb≦10の条件を満たす
+                // 平方数の因数を含む（a > 1が必須）数で、かつb < 17、かつb≧11またはb≦10の条件を満たす
                 const isSimplifiable = simplified.a > 1;
-                const meetsCondition = shouldBeHighB ? (simplified.b >= 11) : (simplified.b <= 10);
+                const isBUnder17 = simplified.b < 17; // √の中身は17未満に制限
+                const meetsCondition = shouldBeHighB ? (simplified.b >= 11 && simplified.b < 17) : (simplified.b <= 10);
 
-                if (isSimplifiable && meetsCondition) {
+                if (isSimplifiable && isBUnder17 && meetsCondition) {
                     break;
                 }
 
                 attempts++;
             } while (attempts < maxAttempts);
 
-            // 最大試行回数を超えた場合は条件を緩和して任意の簡単化可能な数（a > 1）を返す
+            // 最大試行回数を超えた場合は条件を緩和して任意の簡単化可能な数（a > 1, b < 17）を返す
             if (attempts >= maxAttempts) {
                 do {
                     num = Math.floor(Math.random() * 93) + 8;
                     const simplified = simplifySquareRoot(num);
-                } while (simplifySquareRoot(num).a <= 1);
+                } while (simplifySquareRoot(num).a <= 1 || simplifySquareRoot(num).b >= 17);
             }
 
             return num;
@@ -2675,6 +3989,12 @@
 
         // 平方根問題を生成
         function generateSquareRootQuestion() {
+            // ハードモードで35%の確率で分数問題を出題
+            if (difficultyMode === 'hard' && Math.random() < 0.35) {
+                generateSquareRootHardQuestion();
+                return;
+            }
+
             let x;
             do {
                 x = getRandomSquareRootNumber();
@@ -2690,7 +4010,8 @@
                 a: correctA,
                 b: correctB,
                 original: `√${x}`,
-                answer: correctB === 1 ? `${correctA}` : `${correctA}√${correctB}`
+                answer: correctB === 1 ? `${correctA}` : `${correctA}√${correctB}`,
+                isFraction: false
             };
 
             // 現在の問題の値を保存
@@ -2698,6 +4019,160 @@
 
             document.getElementById('question').innerHTML = `${formatSquareRoot(x)} = ____`;
             generateSquareRootAnswers();
+        }
+
+        // 平方根ハード問題を生成（分数形式: ab/√b = a√b）
+        function generateSquareRootHardQuestion() {
+            // aは1〜9、bは2,3,5,6,7,10のいずれか
+            const possibleB = [2, 3, 5, 6, 7, 10];
+            let a, b;
+
+            do {
+                a = Math.floor(Math.random() * 9) + 1; // 1〜9
+                b = possibleB[Math.floor(Math.random() * possibleB.length)];
+            } while (lastQuestionValues && lastQuestionValues.isFraction &&
+                     lastQuestionValues.a === a && lastQuestionValues.b === b);
+
+            // 分子 = a * b
+            const numerator = a * b;
+
+            currentQuestion = {
+                a: a,
+                b: b,
+                numerator: numerator,
+                original: `${numerator}/√${b}`,
+                answer: a === 1 ? `√${b}` : `${a}√${b}`,
+                isFraction: true,
+                singleSelection: a === 1 // a=1の場合は√bのみ選択で正解
+            };
+
+            lastQuestionValues = { isFraction: true, a, b };
+
+            // 分数表示
+            const questionHTML = `<span class="fraction"><span class="numerator">${numerator}</span><span class="denominator">${formatSquareRoot(b)}</span></span> = ____`;
+            document.getElementById('question').innerHTML = questionHTML;
+
+            generateSquareRootHardAnswers();
+        }
+
+        // 平方根ハード問題の解答ボタンを生成
+        function generateSquareRootHardAnswers() {
+            const correctA = currentQuestion.a;
+            const correctB = currentQuestion.b;
+            const singleSelection = currentQuestion.singleSelection;
+
+            // 整数の選択肢を生成（左側4つ）
+            const aChoices = new Set([correctA]);
+            while (aChoices.size < 4) {
+                const candidate = Math.floor(Math.random() * 9) + 1; // 1〜9
+                aChoices.add(candidate);
+            }
+
+            // √の選択肢を生成（右側4つ）- 正解を含む
+            const possibleB = [2, 3, 5, 6, 7, 10];
+            const bChoices = new Set([correctB]);
+            while (bChoices.size < 4) {
+                const candidate = possibleB[Math.floor(Math.random() * possibleB.length)];
+                bChoices.add(candidate);
+            }
+
+            const aArray = Array.from(aChoices).sort(() => Math.random() - 0.5);
+            const bArray = Array.from(bChoices).sort(() => Math.random() - 0.5);
+
+            const answerGrid = document.getElementById('answerGrid');
+            answerGrid.innerHTML = '';
+            answerGrid.className = 'answer-grid';
+
+            for (let i = 0; i < 4; i++) {
+                // 左側: 整数
+                const aBtn = document.createElement('button');
+                aBtn.className = 'answer-btn';
+                aBtn.textContent = aArray[i];
+                aBtn.setAttribute('data-type', 'a');
+                aBtn.setAttribute('data-value', aArray[i]);
+                aBtn.onclick = () => selectSquareRootHardAnswer(aBtn, 'a', aArray[i]);
+                answerGrid.appendChild(aBtn);
+
+                // 右側: √b
+                const bBtn = document.createElement('button');
+                bBtn.className = 'answer-btn';
+                bBtn.innerHTML = formatSquareRoot(bArray[i]);
+                bBtn.setAttribute('data-type', 'b');
+                bBtn.setAttribute('data-value', bArray[i]);
+                bBtn.onclick = () => selectSquareRootHardAnswer(bBtn, 'b', bArray[i]);
+                answerGrid.appendChild(bBtn);
+            }
+        }
+
+        function selectSquareRootHardAnswer(button, type, value) {
+            // 同じタイプの既存選択を解除
+            document.querySelectorAll('.answer-btn').forEach(btn => {
+                if (btn !== button && btn.classList.contains('selected')) {
+                    const btnType = btn.getAttribute('data-type');
+                    if (btnType === type) {
+                        btn.classList.remove('selected');
+                    }
+                }
+            });
+
+            button.classList.toggle('selected');
+
+            if (button.classList.contains('selected')) {
+                selectedAnswers = selectedAnswers.filter(ans => ans.type !== type);
+                selectedAnswers.push({ type, value });
+            } else {
+                selectedAnswers = selectedAnswers.filter(ans => !(ans.type === type && ans.value === value));
+            }
+
+            checkSquareRootHardAnswer();
+        }
+
+        function checkSquareRootHardAnswer() {
+            const correctA = currentQuestion.a;
+            const correctB = currentQuestion.b;
+            const singleSelection = currentQuestion.singleSelection;
+
+            const hasCorrectA = selectedAnswers.some(ans => ans.type === 'a' && ans.value === correctA);
+            const hasCorrectB = selectedAnswers.some(ans => ans.type === 'b' && ans.value === correctB);
+
+            if (singleSelection) {
+                // a=1の場合: √bのみ選択で正解
+                if (selectedAnswers.length === 1) {
+                    const ans = selectedAnswers[0];
+                    if (ans.type === 'b' && ans.value === correctB) {
+                        correctAnswer();
+                    } else if (ans.type === 'a') {
+                        // 整数を選択したら不正解
+                        wrongAnswer();
+                    } else if (ans.type === 'b' && ans.value !== correctB) {
+                        wrongAnswer();
+                    }
+                }
+                // 2つ選択した場合は不正解
+                if (selectedAnswers.length >= 2) {
+                    wrongAnswer();
+                }
+            } else {
+                // a>1の場合: aとbの両方選択で正解
+                if (selectedAnswers.length === 1) {
+                    const ans = selectedAnswers[0];
+                    if ((ans.type === 'a' && ans.value === correctA) ||
+                        (ans.type === 'b' && ans.value === correctB)) {
+                        playSound(partialCorrectSound);
+                    } else {
+                        wrongAnswer();
+                        return;
+                    }
+                }
+
+                if (selectedAnswers.length === 2) {
+                    if (hasCorrectA && hasCorrectB) {
+                        correctAnswer();
+                    } else {
+                        wrongAnswer();
+                    }
+                }
+            }
         }
 
         // 平方根の解答ボタンを生成（4×2レイアウト）
