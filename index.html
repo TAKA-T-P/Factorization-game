@@ -631,13 +631,13 @@
             margin-top: 5px;
         }
 
-        .factors-grid .answer-btn:nth-child(8) {
+        .factors-grid .answer-btn[data-value="square"] {
             background: #f59e0b;
             border-color: #f59e0b;
             color: white;
         }
 
-        .factors-grid .answer-btn:nth-child(8):hover {
+        .factors-grid .answer-btn[data-value="square"]:hover {
             background: #d97706;
             box-shadow: 0 4px 8px rgba(245, 158, 11, 0.3);
         }
@@ -2101,10 +2101,18 @@
         }
 
         function generateExpandQuestion() {
-            // ハードモードで50%の確率でハード問題を出題
-            if (difficultyMode === 'hard' && Math.random() < 0.5) {
-                generateExpandHardQuestion();
-                return;
+            // ハードモードの場合
+            if (difficultyMode === 'hard') {
+                // 共通因数パターン: 約15%の確率
+                if (Math.random() < 0.15) {
+                    generateExpandCommonFactorPattern();
+                    return;
+                }
+                // 残り85%のうち50%でハード問題を出題
+                if (Math.random() < 0.5) {
+                    generateExpandHardQuestion();
+                    return;
+                }
             }
 
             // ノーマル問題: 20%の確率で2乗問題を生成
@@ -2203,6 +2211,16 @@
                 d = getRandomNonZeroSmall(); // -9〜+9（0除外）
             } while (gcd(c, Math.abs(d)) !== 1);
             return { c, d };
+        }
+
+        // 互いに素になるb,cのペアを生成（共通因数パターン用、1〜9の正整数）
+        function getCoprimePositivePair() {
+            let b, c;
+            do {
+                b = Math.floor(Math.random() * 9) + 1; // 1〜9
+                c = Math.floor(Math.random() * 9) + 1; // 1〜9
+            } while (gcd(b, c) !== 1);
+            return { b, c };
         }
 
         function generateExpandHardQuestion() {
@@ -2397,6 +2415,75 @@
             generateExpandHardAnswers();
         }
 
+        // 共通因数パターン: ax(bx+c), ax(bx-c), ax(bx+cy), ax(bx-cy), axy(bx+cy), axy(bx-cy)
+        function generateExpandCommonFactorPattern() {
+            // サブパターン1〜6を均等に選択
+            const subPattern = Math.floor(Math.random() * 6) + 1;
+
+            let a, b, c;
+            do {
+                a = Math.floor(Math.random() * 9) + 1; // 1〜9
+                const pair = getCoprimePositivePair();
+                b = pair.b;
+                c = pair.c;
+            } while (lastQuestionValues && lastQuestionValues.pattern === 'cf' &&
+                     lastQuestionValues.a === a && lastQuestionValues.b === b && lastQuestionValues.c === c &&
+                     lastQuestionValues.subPattern === subPattern);
+
+            const col1Value = a * b; // 高次項の係数
+            const isPlus = (subPattern % 2 === 1); // 奇数サブパターンは+
+            const col2Value = isPlus ? a * c : -(a * c); // 低次項の係数（符号付き）
+
+            // 問題テキスト生成
+            const aDisplay = a === 1 ? '' : a;
+            const bDisplay = b === 1 ? '' : b;
+            const cDisplay = c === 1 ? '' : c;
+            const sign = isPlus ? '+' : '-';
+
+            let questionText;
+            if (subPattern <= 2) {
+                // ①② ax(bx±c)
+                questionText = `${aDisplay}x(${bDisplay}x${sign}${c}) = ____`;
+            } else if (subPattern <= 4) {
+                // ③④ ax(bx±cy)
+                questionText = `${aDisplay}x(${bDisplay}x${sign}${cDisplay}y) = ____`;
+            } else {
+                // ⑤⑥ axy(bx±cy)
+                questionText = `${aDisplay}xy(${bDisplay}x${sign}${cDisplay}y) = ____`;
+            }
+
+            // 展開結果の文字列（answer表示用）
+            const t1 = col1Value === 1 ? '' : col1Value;
+            const t2Sign = col2Value >= 0 ? '+' : '';
+            const t2 = col2Value === 1 ? '' : col2Value === -1 ? '-' : col2Value;
+            let answerText;
+            if (subPattern <= 2) {
+                answerText = `${t1}x²${t2Sign}${t2}x`;
+            } else if (subPattern <= 4) {
+                answerText = `${t1}x²${t2Sign}${t2}xy`;
+            } else {
+                answerText = `${t1}x²y${t2Sign}${t2}xy²`;
+            }
+
+            currentQuestion = {
+                text: questionText,
+                col1Value: col1Value,
+                col2Value: col2Value,
+                a: a,
+                b: b,
+                c: c,
+                subPattern: subPattern,
+                original: questionText.replace(' = ____', ''),
+                answer: answerText,
+                hardPattern: 7,
+                requiredSelections: 2
+            };
+
+            lastQuestionValues = { pattern: 'cf', a, b, c, subPattern };
+            document.getElementById('question').innerHTML = formatMathText(questionText);
+            generateExpandHardAnswers();
+        }
+
         function generateExpandHardAnswers() {
             const pattern = currentQuestion.hardPattern;
             const answerGrid = document.getElementById('answerGrid');
@@ -2413,8 +2500,23 @@
             let col1Label, col2Label, col3Label;
             let correctCol1, correctCol2, correctCol3;
             let col2IsDummy = false; // パターン4,5,1(xy係数0)では中央列はダミー
+            let col3IsDummy = false; // パターン7（共通因数）では右列はダミー
 
-            if (pattern === 1) {
+            if (pattern === 7) {
+                // 共通因数パターン: 右列（col3）がダミー
+                const sub = currentQuestion.subPattern;
+                if (sub <= 2) {
+                    col1Label = 'x²'; col2Label = 'x'; col3Label = '';
+                } else if (sub <= 4) {
+                    col1Label = 'x²'; col2Label = 'xy'; col3Label = 'y²';
+                } else {
+                    col1Label = 'x²y'; col2Label = 'xy²'; col3Label = 'y³';
+                }
+                correctCol1 = currentQuestion.col1Value;
+                correctCol2 = currentQuestion.col2Value;
+                correctCol3 = null;
+                col3IsDummy = true;
+            } else if (pattern === 1) {
                 // (x+ay)(x+by) = x² + xyCoeff·xy + y2Coeff·y²
                 col1Label = 'x²';
                 col2Label = 'xy';
@@ -2477,11 +2579,15 @@
             }
 
             // 各列の選択肢を生成
-            const col1Choices = generateX2Choices(correctCol1);
+            const col1Choices = pattern === 7
+                ? generatePositiveChoices(correctCol1)
+                : generateX2Choices(correctCol1);
             const col2Choices = col2IsDummy
                 ? generateDummyChoicesNonZero()
                 : generateChoicesForValue(correctCol2, false);
-            const col3Choices = generateChoicesForValue(correctCol3, false);
+            const col3Choices = col3IsDummy
+                ? generateDummyChoicesNonZero()
+                : generateChoicesForValue(correctCol3, false);
 
             // シャッフル
             const col1Array = Array.from(col1Choices).sort(() => Math.random() - 0.5);
@@ -2536,6 +2642,18 @@
                 if (candidate !== correctValue) {
                     choices.add(candidate);
                 }
+            }
+            return choices;
+        }
+
+        // 正の整数の選択肢を生成（共通因数パターン用）
+        function generatePositiveChoices(correctValue) {
+            const choices = new Set([correctValue]);
+            while (choices.size < 4) {
+                const offset = Math.floor(Math.random() * 20) - 10;
+                let candidate = correctValue + offset;
+                if (candidate <= 0) candidate = Math.floor(Math.random() * 9) + 1;
+                choices.add(candidate);
             }
             return choices;
         }
@@ -2598,7 +2716,10 @@
             const pattern = currentQuestion.hardPattern;
             let correctValues = {};
 
-            if (pattern === 1) {
+            if (pattern === 7) {
+                // 共通因数パターン: col3はダミー（選択したら不正解）
+                correctValues = { col1: currentQuestion.col1Value, col2: currentQuestion.col2Value };
+            } else if (pattern === 1) {
                 // xyCoeffが0の場合はcol2はダミー
                 if (currentQuestion.xyCoeff === 0) {
                     correctValues = { col1: 1, col3: currentQuestion.y2Coeff };
@@ -2784,10 +2905,18 @@
         }
 
         function generateFactorizeQuestion() {
-            // ハードモードで50%の確率でハード問題を出題
-            if (difficultyMode === 'hard' && Math.random() < 0.5) {
-                generateFactorizeHardQuestion();
-                return;
+            // ハードモードの場合
+            if (difficultyMode === 'hard') {
+                // 共通因数パターン: 約15%の確率
+                if (Math.random() < 0.15) {
+                    generateFactorizeCommonFactorPattern();
+                    return;
+                }
+                // 残り85%のうち50%でハード問題を出題
+                if (Math.random() < 0.5) {
+                    generateFactorizeHardQuestion();
+                    return;
+                }
             }
 
             // ノーマル問題: 20%の確率で2乗の答えになる問題を生成
@@ -3036,13 +3165,79 @@
             generateFactorizeHardAnswers();
         }
 
+        // 因数分解共通因数パターン: abx²±acx = ax(bx±c) 等
+        function generateFactorizeCommonFactorPattern() {
+            // サブパターン1〜6を均等に選択
+            const subPattern = Math.floor(Math.random() * 6) + 1;
+
+            let a, b, c;
+            do {
+                a = Math.floor(Math.random() * 9) + 1; // 1〜9
+                const pair = getCoprimePositivePair();
+                b = pair.b;
+                c = pair.c;
+            } while (lastQuestionValues && lastQuestionValues.pattern === 'cf' &&
+                     lastQuestionValues.a === a && lastQuestionValues.b === b && lastQuestionValues.c === c &&
+                     lastQuestionValues.subPattern === subPattern);
+
+            const t1Coeff = a * b; // 高次項の係数
+            const t2Coeff = a * c; // 低次項の係数
+            const isPlus = (subPattern % 2 === 1); // 奇数サブパターンは+
+            const sign = isPlus ? '+' : '-';
+
+            // 問題テキスト（展開形）
+            const t1Display = t1Coeff === 1 ? '' : t1Coeff;
+            const t2Display = t2Coeff === 1 ? '' : t2Coeff;
+            let questionText;
+            if (subPattern <= 2) {
+                questionText = `${t1Display}x²${sign}${t2Display}x = ______`;
+            } else if (subPattern <= 4) {
+                questionText = `${t1Display}x²${sign}${t2Display}xy = ______`;
+            } else {
+                questionText = `${t1Display}x²y${sign}${t2Display}xy² = ______`;
+            }
+
+            // 答え（因数分解形）
+            const aDisplay = a === 1 ? '' : a;
+            const bDisplay = b === 1 ? '' : b;
+            const cDisplay = c === 1 ? '' : c;
+            let answerText;
+            if (subPattern <= 2) {
+                answerText = `${aDisplay}x(${bDisplay}x${sign}${c})`;
+            } else if (subPattern <= 4) {
+                answerText = `${aDisplay}x(${bDisplay}x${sign}${cDisplay}y)`;
+            } else {
+                answerText = `${aDisplay}xy(${bDisplay}x${sign}${cDisplay}y)`;
+            }
+
+            currentQuestion = {
+                text: questionText,
+                a: a,
+                b: b,
+                c: c,
+                subPattern: subPattern,
+                isPlus: isPlus,
+                original: questionText.replace(' = ______', ''),
+                answer: answerText,
+                hardPattern: 6,
+                isCommonFactor: true
+            };
+
+            lastQuestionValues = { pattern: 'cf', a, b, c, subPattern };
+            document.getElementById('question').innerHTML = formatMathText(questionText);
+            generateFactorizeHardAnswers();
+        }
+
         function generateFactorizeHardAnswers() {
             const pattern = currentQuestion.hardPattern;
             const answerGrid = document.getElementById('answerGrid');
             answerGrid.innerHTML = '';
             answerGrid.className = 'factors-grid';
 
-            if (pattern === 1) {
+            if (pattern === 6) {
+                // 共通因数パターン - 2つ選択
+                generateFactorizeCommonFactorAnswers();
+            } else if (pattern === 1) {
                 // (x+ay)(x+by) 形式 - 2つ選択
                 generateFactorizePattern1Answers();
             } else if (pattern === 2 || pattern === 3) {
@@ -3051,6 +3246,71 @@
             } else {
                 // (cx+d)(cx-d) または (cx+dy)(cx-dy) 形式 - 2つ選択
                 generateFactorizeDifferenceAnswers();
+            }
+        }
+
+        function generateFactorizeCommonFactorAnswers() {
+            // 共通因数パターンの解答選択肢
+            const correctA = currentQuestion.a;
+            const correctB = currentQuestion.b;
+            const correctC = currentQuestion.c;
+            const subPattern = currentQuestion.subPattern;
+            const isPlus = currentQuestion.isPlus;
+            const sign = isPlus ? '+' : '-';
+            const hasXY = subPattern >= 5; // ⑤⑥はaxyが共通因数
+            const hasY = subPattern >= 3; // ③〜⑥は残りの因数にyが含まれる
+
+            // 左列: 共通因数の選択肢（ax または axy）
+            const leftChoices = new Set([correctA]);
+            while (leftChoices.size < 4) {
+                const candidate = Math.floor(Math.random() * 9) + 1; // 1〜9
+                leftChoices.add(candidate);
+            }
+
+            // 右列: 残りの因数の選択肢（(bx+c) 等）
+            const rightChoices = [{ b: correctB, c: correctC }];
+            while (rightChoices.length < 4) {
+                const pair = getCoprimePositivePair();
+                if (!rightChoices.some(ch => ch.b === pair.b && ch.c === pair.c)) {
+                    rightChoices.push({ b: pair.b, c: pair.c });
+                }
+            }
+
+            // シャッフル
+            const leftArray = Array.from(leftChoices).sort(() => Math.random() - 0.5);
+            rightChoices.sort(() => Math.random() - 0.5);
+
+            const answerGrid = document.getElementById('answerGrid');
+            const varLabel = hasXY ? 'xy' : 'x';
+
+            for (let i = 0; i < 4; i++) {
+                // 左側: 共通因数
+                const leftBtn = document.createElement('button');
+                leftBtn.className = 'answer-btn';
+                const aDisp = leftArray[i] === 1 ? '' : leftArray[i];
+                leftBtn.innerHTML = formatMathText(`${aDisp}${varLabel}`);
+                leftBtn.setAttribute('data-position', 'left');
+                leftBtn.setAttribute('data-value', leftArray[i]);
+                leftBtn.onclick = () => selectFactorizeHardAnswer(leftBtn, leftArray[i], 'commonFactor');
+                answerGrid.appendChild(leftBtn);
+
+                // 右側: 残りの因数
+                const rightBtn = document.createElement('button');
+                rightBtn.className = 'answer-btn';
+                const rb = rightChoices[i].b;
+                const rc = rightChoices[i].c;
+                const rbDisp = rb === 1 ? '' : rb;
+                if (hasY) {
+                    const rcDisp = rc === 1 ? '' : rc;
+                    rightBtn.innerHTML = formatMathText(`(${rbDisp}x${sign}${rcDisp}y)`);
+                } else {
+                    rightBtn.innerHTML = formatMathText(`(${rbDisp}x${sign}${rc})`);
+                }
+                rightBtn.setAttribute('data-position', 'right');
+                rightBtn.setAttribute('data-b', rb);
+                rightBtn.setAttribute('data-c', rc);
+                rightBtn.onclick = () => selectFactorizeHardAnswer(rightBtn, { b: rb, c: rc }, 'commonFactor');
+                answerGrid.appendChild(rightBtn);
             }
         }
 
@@ -3342,6 +3602,41 @@
                     selectedAnswers.push({ value, isSquare: false });
                     button.classList.add('selected');
                 }
+            } else if (answerType === 'commonFactor') {
+                // 共通因数パターン - 2つ選択（左:数値, 右:オブジェクト）
+                if (typeof value === 'number') {
+                    // 左列（共通因数の係数）
+                    if (selectedAnswers.find(ans => ans.value === value && typeof ans.value === 'number')) {
+                        selectedAnswers = selectedAnswers.filter(ans => !(typeof ans.value === 'number' && ans.value === value));
+                        button.classList.remove('selected');
+                    } else {
+                        // 同じ列の既存選択を解除
+                        selectedAnswers.filter(ans => typeof ans.value === 'number').forEach(ans => {
+                            document.querySelectorAll('.answer-btn[data-position="left"].selected').forEach(btn => {
+                                btn.classList.remove('selected');
+                            });
+                        });
+                        selectedAnswers = selectedAnswers.filter(ans => typeof ans.value !== 'number');
+                        selectedAnswers.push({ value, isSquare: false });
+                        button.classList.add('selected');
+                    }
+                } else {
+                    // 右列（残りの因数）
+                    if (selectedAnswers.find(ans => ans.value && ans.value.b === value.b && ans.value.c === value.c)) {
+                        selectedAnswers = selectedAnswers.filter(ans => !(ans.value && ans.value.b === value.b && ans.value.c === value.c));
+                        button.classList.remove('selected');
+                    } else {
+                        // 同じ列の既存選択を解除
+                        selectedAnswers.filter(ans => typeof ans.value === 'object' && ans.value.b !== undefined).forEach(ans => {
+                            document.querySelectorAll('.answer-btn[data-position="right"].selected').forEach(btn => {
+                                btn.classList.remove('selected');
+                            });
+                        });
+                        selectedAnswers = selectedAnswers.filter(ans => !(typeof ans.value === 'object' && ans.value.b !== undefined));
+                        selectedAnswers.push({ value, isSquare: false });
+                        button.classList.add('selected');
+                    }
+                }
             }
 
             checkFactorizeHardAnswer();
@@ -3364,7 +3659,47 @@
         function checkFactorizeHardAnswer() {
             const pattern = currentQuestion.hardPattern;
 
-            if (pattern === 1) {
+            if (pattern === 6) {
+                // 共通因数パターン
+                const correctA = currentQuestion.a;
+                const correctB = currentQuestion.b;
+                const correctC = currentQuestion.c;
+                const nonSquareAnswers = selectedAnswers.filter(ans => !ans.isSquare);
+
+                // 左の値（数値）と右の値（オブジェクト）を分離
+                const leftAns = nonSquareAnswers.find(ans => typeof ans.value === 'number');
+                const rightAns = nonSquareAnswers.find(ans => typeof ans.value === 'object' && ans.value.b !== undefined);
+
+                // 1つ選択で正解なら中間音
+                if (nonSquareAnswers.length === 1) {
+                    if (leftAns && leftAns.value === correctA) {
+                        playSound(partialCorrectSound);
+                    } else if (rightAns && rightAns.value.b === correctB && rightAns.value.c === correctC) {
+                        playSound(partialCorrectSound);
+                    } else {
+                        wrongAnswer();
+                        return;
+                    }
+                }
+
+                // 2つ選択で判定
+                if (nonSquareAnswers.length === 2) {
+                    if (leftAns && rightAns &&
+                        leftAns.value === correctA &&
+                        rightAns.value.b === correctB &&
+                        rightAns.value.c === correctC) {
+                        correctAnswer();
+                    } else {
+                        wrongAnswer();
+                    }
+                }
+
+                // ²ボタンを押したら不正解
+                if (selectedAnswers.some(ans => ans.isSquare)) {
+                    wrongAnswer();
+                }
+
+            } else if (pattern === 1) {
                 // (x+ay)(x+by) 形式
                 const correctA = currentQuestion.a;
                 const correctB = currentQuestion.b;
@@ -3407,6 +3742,9 @@
                     const val = nonSquareAnswers[0].value;
                     if (val.c === correctC && val.d === correctD) {
                         playSound(partialCorrectSound);
+                    } else {
+                        wrongAnswer();
+                        return;
                     }
                 }
 
