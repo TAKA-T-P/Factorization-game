@@ -684,6 +684,41 @@
             color: white;
         }
 
+        /* KEC数学科ラボへのリンク（左上） */
+        .lab-link {
+            position: absolute;
+            top: 15px;
+            left: 15px;
+            background: white;
+            border: 2px solid #e2e8f0;
+            color: #64748b;
+            padding: 8px 12px;
+            font-size: clamp(10px, 2.4vw, 13px);
+            font-family: inherit;
+            font-weight: 500;
+            text-decoration: none;
+            border-radius: 10px;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            z-index: 10;
+        }
+
+        @media (max-width: 480px) {
+            .lab-link {
+                padding: 6px 10px;
+                font-size: 10px;
+            }
+        }
+
+        .lab-link:hover {
+            background: #f1f5f9;
+            border-color: #3b82f6;
+            color: #3b82f6;
+            box-shadow: 0 4px 8px rgba(59, 130, 246, 0.15);
+        }
+
         /* コンボ表示とヘルプボタンのコンテナ */
         .combo-help-container {
             display: flex;
@@ -1083,6 +1118,9 @@
             <div class="math-formula-bg flow-2"><span class="math-x">x</span>²-9 = (<span class="math-x">x</span>+3)(<span class="math-x">x</span>-3)</div>
             <div class="math-formula-bg flow-3">(<span class="math-x">x</span>+5)² = <span class="math-x">x</span>²+10<span class="math-x">x</span>+25</div>
             <div class="math-formula-bg flow-4"><span class="math-x">x</span>²-7<span class="math-x">x</span>+12 = (<span class="math-x">x</span>-3)(<span class="math-x">x</span>-4)</div>
+
+            <!-- KEC数学科ラボへのリンク（左上） -->
+            <a class="lab-link" href="https://taka-t-p.github.io/math-app-portal/">KEC数学科ラボへ</a>
 
             <!-- 効果音切り替え（右上） -->
             <button class="audio-toggle active" onclick="toggleAudio()" id="audioToggleBtn">
