@@ -137,6 +137,96 @@ test('最終問題：時間切れで不正解になり、結果画面へ進む',
     window.close();
 });
 
+test('練習モード：時間・スコアなし、不正解は選び直し、正解後は「次へ」「練習をやめる」', async () => {
+    const window = await loadApp({ seed: 13, storage: { highScore_expand_60_normal: '500' } });
+    const { document } = window;
+    const button = (type, match) => Array.from(document.querySelectorAll(`.answer-btn[data-type="${type}"]`))
+        .find(b => match(parseInt(b.getAttribute('data-value'))));
+    const controlsShown = () => document.getElementById('practiceControls').classList.contains('show');
+
+    document.getElementById('timePractice').click();
+    assert.ok(document.getElementById('timePractice').classList.contains('active'));
+    assert.ok(!document.getElementById('time60').classList.contains('active'));
+    assert.equal(window.run('timeMode'), 60, '1分/3分の設定は残る');
+
+    // カウントダウンなしで1問目が出て、タイマー・コンボゲージは動かない
+    window.run(`startGame('expand')`);
+    assert.ok(!document.getElementById('countdownOverlay').classList.contains('show'));
+    assert.ok(document.body.classList.contains('practice-mode'));
+    assert.equal(document.getElementById('timerDisplay').textContent, '練習モード');
+    assert.equal(window.run('timer'), null);
+    assert.equal(document.getElementById('comboGaugeContainer').style.display, 'none');
+    const question = window.run('currentQuestion.original');
+
+    // 不正解：問題はそのまま、選択が外れてもう一度選べる
+    button('x', v => v !== window.run('currentQuestion.xCoeff')).click();
+    assert.ok(document.querySelector('.answer-btn.wrong'));
+    assert.ok(!controlsShown());
+    await sleep(900);
+    assert.equal(window.run('currentQuestion.original'), question);
+    assert.equal(document.querySelectorAll('.answer-btn.selected, .answer-btn.wrong').length, 0);
+    assert.equal(window.run('answeredCurrentQuestion'), false);
+
+    // 正解：次の問題には進まず「次へ」「練習をやめる」が出る。得点・記録はつけない
+    const xCoeff = window.run('currentQuestion.xCoeff');
+    const constant = window.run('currentQuestion.constant');
+    if (xCoeff !== 0) button('x', v => v === xCoeff).click();
+    if (constant !== 0) button('const', v => v === constant).click();
+    assert.ok(controlsShown());
+    assert.equal(window.run('currentQuestion.original'), question);
+    assert.ok(document.getElementById('answerGrid').classList.contains('practice-locked'));
+    // ボタンは「正解!」と同じ行に出る
+    const row = document.getElementById('comboDisplay').parentElement;
+    assert.equal(document.getElementById('practiceControls').parentElement, row);
+    assert.ok(document.getElementById('comboDisplay').textContent.includes('正解!'));
+    assert.deepEqual([window.run('score'), window.run('correctAnswers'), window.run('wrongAnswers'), window.run('questionHistory.length')], [0, 0, 0, 0]);
+
+    // 「次へ」で次の問題
+    document.querySelector('#practiceControls .practice-next-btn').click();
+    assert.notEqual(window.run('currentQuestion.original'), question);
+    assert.ok(!controlsShown());
+
+    // 「練習をやめる」でタイトルへ。ハイスコアは変わらない
+    window.run('correctAnswer()');
+    assert.ok(controlsShown());
+    document.querySelector('#practiceControls .practice-quit-btn').click();
+    assert.ok(document.getElementById('titleScreen').classList.contains('active'));
+    assert.ok(!document.body.classList.contains('practice-mode'));
+    assert.ok(!controlsShown());
+    assert.equal(window.localStorage.getItem('highScore_expand_60_normal'), '500');
+
+    // 1分に戻すと、いつものゲーム（カウントダウンあり）
+    document.getElementById('time60').click();
+    window.run(`startGame('expand')`);
+    assert.ok(document.getElementById('countdownOverlay').classList.contains('show'));
+    assert.ok(!document.body.classList.contains('practice-mode'));
+    window.run('goToTitle()');
+    assert.deepEqual(window.__errors, []);
+    window.close();
+});
+
+test('練習モード：因数分解・平方根・ハードでも、正解するまで同じ問題で次へ進まない', async () => {
+    const window = await loadApp({ seed: 21 });
+    window.run(`selectTime('practice')`);
+    for (const [mode, diff] of [['factorize', 'normal'], ['squareRoot', 'normal'], ['expand', 'hard'], ['factorize', 'hard'], ['squareRoot', 'hard']]) {
+        window.run(`selectDifficulty('${diff}'); startGame('${mode}')`);
+        for (let i = 0; i < 5; i++) {
+            const question = window.run('currentQuestion.original');
+            window.run('wrongAnswer()');
+            assert.equal(window.run('currentQuestion.original'), question, `${mode}/${diff}`);
+            window.run('clearAllTimeouts(); answeredCurrentQuestion = false;');
+            window.run('correctAnswer()');
+            assert.equal(window.run('currentQuestion.original'), question, `${mode}/${diff}`);
+            assert.ok(window.document.getElementById('practiceControls').classList.contains('show'));
+            window.run('nextPracticeQuestion()');
+        }
+        assert.deepEqual([window.run('score'), window.run('correctAnswers'), window.run('wrongAnswers')], [0, 0, 0]);
+        window.run('goToTitle()');
+    }
+    assert.deepEqual(window.__errors, []);
+    window.close();
+});
+
 test('タイトル画面：設定・効果音・「？」解説・リンク・リトライ・戻る', async () => {
     const window = await loadApp({ seed: 2 });
     const { document } = window;

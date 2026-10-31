@@ -2,6 +2,7 @@
 
 let gameMode = '';
 let timeMode = 60; // 60秒 or 180秒
+let isPracticeMode = false; // 練習モード（時間制限・スコアなし）。timeMode は1分/3分の設定のまま残す
 let difficultyMode = 'normal'; // 'normal' または 'hard'
 let score = 0;
 let correctAnswers = 0;
@@ -143,10 +144,14 @@ function showComboGauge(show) {
     container.style.display = show ? 'block' : 'none';
 }
 
+// time は 60 / 180 / 'practice'
 function selectTime(time) {
-    timeMode = time;
+    isPracticeMode = time === 'practice';
+    if (!isPracticeMode) {
+        timeMode = time;
+    }
     document.querySelectorAll('.time-btn').forEach(btn => btn.classList.remove('active'));
-    document.getElementById(`time${time}`).classList.add('active');
+    document.getElementById(isPracticeMode ? 'timePractice' : `time${time}`).classList.add('active');
 }
 
 function selectDifficulty(difficulty) {
@@ -261,7 +266,14 @@ function startGame(mode) {
     document.getElementById('score').textContent = score;
     document.getElementById('timerDisplay').innerHTML = '残り時間: <span id="timeLeft">' + timeLeft.toFixed(1) + '</span>秒';
 
+    document.body.classList.remove('practice-mode');
     showScreen('gameScreen');
+
+    // 練習モードはカウントダウン・タイマーなしで始める
+    if (isPracticeMode) {
+        startPractice();
+        return;
+    }
 
     // カウントダウンを開始
     showCountdown();
@@ -368,13 +380,15 @@ function generateQuestion() {
     const answerGrid = document.getElementById('answerGrid');
     answerGrid.className = gameMode === 'factorize' ? 'factors-grid' : 'answer-grid';
 
-    // 1コンボ目からゲージを表示（満タン）、2コンボ目以降は減少開始
-    showComboGauge(true);
+    // 1コンボ目からゲージを表示（満タン）、2コンボ目以降は減少開始（練習モードはゲージなし）
+    showComboGauge(!isPracticeMode);
     comboGaugeValue = 100;
     updateComboGaugeDisplay();
 
     // 2コンボ目以降のみゲージを減らす
-    if (consecutiveCorrect >= 1) {
+    if (isPracticeMode) {
+        stopComboGauge();
+    } else if (consecutiveCorrect >= 1) {
         startComboGauge();
     } else {
         // 1コンボ目はゲージを停止（満タンのまま）
@@ -397,6 +411,11 @@ function correctAnswer() {
         return;
     }
     answeredCurrentQuestion = true;
+
+    if (isPracticeMode) {
+        practiceCorrectAnswer();
+        return;
+    }
 
     // ヘルプボタンを非表示にし、タイマーをクリア
     hideHelpButton();
@@ -502,6 +521,12 @@ function wrongAnswer() {
         return;
     }
     answeredCurrentQuestion = true;
+
+    // 練習モードは問題を変えずに、正解するまで選び直せる
+    if (isPracticeMode) {
+        practiceWrongAnswer();
+        return;
+    }
 
     // ヘルプボタンを非表示にし、タイマーをクリア
     hideHelpButton();
@@ -692,6 +717,8 @@ function goToTitle() {
 
     stopComboGauge();
     showComboGauge(false);
+    hidePracticeControls();
+    document.body.classList.remove('practice-mode');
     // 画面の明るさとエフェクトをリセット
     document.body.classList.remove('gauge-depleted');
     document.body.classList.remove('celebration');

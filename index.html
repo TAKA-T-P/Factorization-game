@@ -38,6 +38,7 @@
                 <div style="display: flex; gap: 15px; justify-content: center;">
                     <button class="btn time-btn active" onclick="selectTime(60)" id="time60">1分</button>
                     <button class="btn time-btn" onclick="selectTime(180)" id="time180">3分</button>
+                    <button class="btn time-btn" onclick="selectTime('practice')" id="timePractice">練習</button>
                 </div>
             </div>
 
@@ -88,6 +89,11 @@
                 </div>
                 <div class="combo-help-container">
                     <div id="comboDisplay" class="combo-display"></div>
+                    <!-- 練習モード：正解したら「正解!」の横に表示 -->
+                    <div id="practiceControls" class="practice-controls">
+                        <button class="practice-btn practice-next-btn" onclick="nextPracticeQuestion()">次へ</button>
+                        <button class="practice-btn practice-quit-btn" onclick="goToTitle()">練習をやめる</button>
+                    </div>
                     <button id="helpButton" class="help-button" onclick="showCorrectAnswerHint()">ヒント</button>
                 </div>
                 <div id="question" class="question"></div>
@@ -211,6 +217,7 @@
     <script src="js/problems/square-root.js"></script>
     <script src="js/hint.js"></script>
     <script src="js/game.js"></script>
+    <script src="js/practice.js"></script>
     <script src="js/main.js"></script>
 
     <!-- はじめての因数×展開講座（チュートリアル） -->

@@ -968,6 +968,63 @@ body.hard-mode {
     border-top: 5px solid currentColor;
 }
 
+/* ===== 練習モード ===== */
+/* スコアは使わないので隠す */
+body.practice-mode .game-header .score {
+    display: none;
+}
+
+/* 正解したとき、「正解!」と同じ行に「次へ」「練習をやめる」を出す（ヒントボタンの場所を使う） */
+/* 「正解!」は表示中 1.2 倍に拡大されるので、その分も含めてボタンとの間をあける */
+body.practice-mode .combo-help-container {
+    gap: 24px;
+}
+
+.practice-controls {
+    display: none;
+    gap: 8px;
+}
+
+.practice-controls.show {
+    display: flex;
+}
+
+.practice-controls.show ~ .help-button {
+    display: none;
+}
+
+.practice-btn {
+    padding: 8px 16px;
+    min-height: 40px;
+    border: none;
+    border-radius: 20px;
+    color: white;
+    font-family: inherit;
+    font-size: clamp(13px, 3.5vw, 16px);
+    font-weight: 600;
+    cursor: pointer;
+    animation: help-button-appear 0.5s ease;
+}
+
+.practice-next-btn {
+    background: linear-gradient(45deg, #3b82f6, #2563eb);
+    box-shadow: 0 4px 10px rgba(59, 130, 246, 0.35);
+}
+
+.practice-quit-btn {
+    background: linear-gradient(45deg, #64748b, #475569);
+    box-shadow: 0 4px 10px rgba(100, 116, 139, 0.3);
+}
+
+/* 判定中・正解後は選択肢を押せないようにする */
+#answerGrid.practice-locked {
+    pointer-events: none;
+}
+
+.practice-retry {
+    color: #ef4444;
+}
+
 /* 時間選択ボタンのスタイル */
 .time-btn {
     min-width: 120px;
