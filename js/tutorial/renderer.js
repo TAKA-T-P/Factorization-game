@@ -5,6 +5,11 @@
     // 項の色（1〜6）。矢印の先端の色にも使う
     const LINK_COLORS = ['#475569', '#2563eb', '#ea580c', '#059669', '#9333ea', '#db2777', '#0891b2'];
 
+    // 根号の記号。フォントの √ だと横棒とつながらないので、中身の高さに合わせて線で描く
+    // （文字の √ は読み上げ・コピー用に見えない形で残す）
+    const SQRT_SIGN_SVG = '<svg class="tu-sqrt-svg" viewBox="0 0 10 20" preserveAspectRatio="none" aria-hidden="true" focusable="false">'
+        + '<path d="M0.6 12.2 L2.6 11 L5.4 19.4 L9.4 0 L10 0"></path></svg>';
+
     function escapeHtml(text) {
         return String(text).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
     }
@@ -17,7 +22,7 @@
     function formula(markup) {
         let html = escapeHtml(markup);
         html = html.replace(/√\{([^{}]*)\}/g, (m, body) =>
-            `<span class="tu-sqrt"><span class="tu-sqrt-sign">√</span><span class="tu-sqrt-body">${body}</span></span>`);
+            `<span class="tu-sqrt"><span class="tu-sqrt-sign"><span class="tu-sqrt-text">√</span>${SQRT_SIGN_SVG}</span><span class="tu-sqrt-body">${body}</span></span>`);
         html = html.replace(/\{\{(.*?)\|\|(.*?)\}\}/g, (m, num, den) =>
             `<span class="tu-frac"><span class="tu-frac-num">${num}</span><span class="tu-frac-den">${den}</span></span>`);
         html = html.replace(/\[\[(.+?)\]\]/g, (m, inner) => {

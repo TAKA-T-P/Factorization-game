@@ -667,21 +667,56 @@
     opacity: 0.55;
 }
 
+/* inline-block にして、中身の数字が前後の文字と同じベースラインに並ぶようにする */
 .tu-sqrt {
-    display: inline-flex;
-    align-items: flex-start;
+    display: inline-block;
+    position: relative;
+    padding-left: 0.55em;
+    line-height: 0; /* 外側の行の高さを持ち込まず、記号の高さを中身にぴったり合わせる */
     white-space: nowrap;
 }
 
+/* 根号の記号は中身と同じ高さに伸ばし、右上の端を横棒の左端につなげる */
 .tu-sqrt-sign {
-    font-size: 1.1em;
-    line-height: 1;
+    position: absolute;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 0.55em;
+}
+
+.tu-sqrt-text {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+}
+
+.tu-sqrt-svg {
+    position: absolute;
+    left: 0;
+    top: 1px; /* 線の中心を横棒（太さ2px）の中心にそろえる */
+    width: 100%;
+    height: calc(100% - 2px);
+    overflow: visible;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 2px;
+    stroke-linejoin: round;
+    stroke-linecap: round;
+    vector-effect: non-scaling-stroke;
+}
+
+.tu-sqrt-svg path {
+    vector-effect: non-scaling-stroke;
 }
 
 .tu-sqrt-body {
+    display: inline-block;
     border-top: 2px solid currentColor;
-    padding: 0 2px;
-    margin-left: -1px;
+    padding: 1px 2px 0;
     line-height: 1.15;
 }
 
