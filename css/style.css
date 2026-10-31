@@ -1,0 +1,1105 @@
+/* 因数×展開 FIGHT! ゲーム本体のスタイル（旧 index.html の <style> から移設） */
+
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Orbitron:wght@700;900&display=swap');
+
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 50%, #cbd5e1 100%);
+    color: #1e293b;
+    min-height: 100vh;
+    overflow-x: hidden;
+    user-select: none;
+    transition: all 0.3s ease;
+    position: relative;
+}
+
+body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0);
+    pointer-events: none;
+    transition: background 0.5s ease;
+    z-index: 100;
+}
+
+body.gauge-depleted::before {
+    background: rgba(0, 0, 0, 0.2);
+}
+
+/* 5問連続正解時の光る演出 */
+body.celebration {
+    background: linear-gradient(135deg, #fef3c7 0%, #fed7aa 50%, #fbbf24 100%);
+    animation: celebration-glow 1.5s ease-in-out;
+}
+
+/* ハードモード選択時の背景 */
+body.hard-mode {
+    background: linear-gradient(135deg, #fef2f2 0%, #fecaca 50%, #fca5a5 100%);
+}
+
+@keyframes celebration-glow {
+    0% { box-shadow: inset 0 0 0 rgba(245, 158, 11, 0); }
+    50% { box-shadow: inset 0 0 100px rgba(245, 158, 11, 0.3); }
+    100% { box-shadow: inset 0 0 0 rgba(245, 158, 11, 0); }
+}
+
+.container {
+    max-width: 100vw;
+    height: 100vh;
+    margin: 0 auto;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    position: relative;
+    z-index: 200;
+}
+
+.screen {
+    display: none;
+    width: 100%;
+    height: 100%;
+    text-align: center;
+    position: relative;
+}
+
+.screen.active {
+    display: flex;
+    flex-direction: column;
+}
+
+.title-screen {
+    justify-content: center;
+    align-items: center;
+    background: radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.1) 0%, transparent 70%);
+    position: relative;
+    overflow: hidden;
+}
+
+/* 背景の流れる数式 */
+.math-formula-bg {
+    position: absolute;
+    font-size: clamp(24px, 5vw, 40px);
+    font-weight: 300;
+    color: rgba(59, 130, 246, 0.20);
+    white-space: nowrap;
+    pointer-events: none;
+    font-family: 'Times New Roman', serif;
+}
+
+.math-formula-bg.flow-1 {
+    top: 10%;
+    animation: flow-diagonal-1 20s linear infinite;
+}
+
+.math-formula-bg.flow-2 {
+    top: 30%;
+    animation: flow-diagonal-2 25s linear infinite;
+    animation-delay: -5s;
+}
+
+.math-formula-bg.flow-3 {
+    top: 50%;
+    animation: flow-diagonal-3 22s linear infinite;
+    animation-delay: -10s;
+}
+
+.math-formula-bg.flow-4 {
+    top: 70%;
+    animation: flow-diagonal-1 24s linear infinite;
+    animation-delay: -15s;
+}
+
+@keyframes flow-diagonal-1 {
+    0% {
+        transform: translate(-100%, -20px) rotate(-10deg);
+    }
+    100% {
+        transform: translate(100vw, 20px) rotate(-10deg);
+    }
+}
+
+@keyframes flow-diagonal-2 {
+    0% {
+        transform: translate(-100%, 20px) rotate(-12deg);
+    }
+    100% {
+        transform: translate(100vw, -20px) rotate(-12deg);
+    }
+}
+
+@keyframes flow-diagonal-3 {
+    0% {
+        transform: translate(-100%, -15px) rotate(-8deg);
+    }
+    100% {
+        transform: translate(100vw, 15px) rotate(-8deg);
+    }
+}
+
+.title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(28px, 7vw, 52px);
+    font-weight: 900;
+    margin-bottom: 10px;
+    margin-top: 60px;
+    color: #3b82f6;
+    text-shadow: 2px 2px 4px rgba(59, 130, 246, 0.3);
+    letter-spacing: 0.05em;
+}
+
+.catchphrase {
+    font-size: clamp(12px, 3vw, 18px);
+    font-weight: 700;
+    margin-bottom: 20px;
+    color: #64748b;
+    font-style: italic;
+}
+
+
+.mode-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.btn {
+    background: linear-gradient(45deg, #3b82f6, #2563eb);
+    border: 2px solid #3b82f6;
+    color: white;
+    padding: 12px 30px;
+    font-size: clamp(16px, 4vw, 24px);
+    font-family: inherit;
+    cursor: pointer;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    min-height: 50px;
+    box-shadow: 0 4px 6px rgba(59, 130, 246, 0.2);
+}
+
+.btn:hover {
+    background: linear-gradient(45deg, #2563eb, #1d4ed8);
+    box-shadow: 0 6px 12px rgba(59, 130, 246, 0.3);
+    transform: translateY(-2px);
+}
+
+.btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(59, 130, 246, 0.2);
+}
+
+.mode-button-row {
+    display: flex;
+    gap: 10px;
+    align-items: center;
+}
+
+.mode-button-row .btn {
+    flex: 1;
+}
+
+.help-btn {
+    background: linear-gradient(45deg, #64748b, #475569);
+    border: 2px solid #64748b;
+    color: white;
+    padding: 12px 20px;
+    font-size: clamp(16px, 4vw, 24px);
+    font-family: inherit;
+    cursor: pointer;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    font-weight: 700;
+    min-height: 50px;
+    min-width: 60px;
+    box-shadow: 0 4px 6px rgba(100, 116, 139, 0.2);
+}
+
+.help-btn:hover {
+    background: linear-gradient(45deg, #475569, #334155);
+    box-shadow: 0 6px 12px rgba(100, 116, 139, 0.3);
+    transform: translateY(-2px);
+}
+
+.help-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 4px rgba(100, 116, 139, 0.2);
+}
+
+.help-screen {
+    padding: 20px;
+    justify-content: flex-start;
+    overflow-y: auto;
+}
+
+.help-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #e2e8f0;
+}
+
+.help-title {
+    font-size: clamp(20px, 5vw, 32px);
+    font-weight: 700;
+    color: #1e293b;
+}
+
+.back-btn {
+    background: linear-gradient(45deg, #64748b, #475569);
+    border: 2px solid #64748b;
+    color: white;
+    padding: 10px 20px;
+    font-size: clamp(14px, 3vw, 18px);
+    font-family: inherit;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    font-weight: 600;
+    box-shadow: 0 2px 4px rgba(100, 116, 139, 0.2);
+}
+
+.back-btn:hover {
+    background: linear-gradient(45deg, #475569, #334155);
+    box-shadow: 0 4px 8px rgba(100, 116, 139, 0.3);
+    transform: translateY(-1px);
+}
+
+.back-btn:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(100, 116, 139, 0.2);
+}
+
+.help-content {
+    text-align: left;
+    font-size: clamp(14px, 3.5vw, 16px);
+    line-height: 1.8;
+    color: #334155;
+    max-width: 800px;
+    margin: 0 auto;
+}
+
+.help-content h2 {
+    font-size: clamp(18px, 4vw, 24px);
+    font-weight: 700;
+    color: #1e293b;
+    margin-top: 25px;
+    margin-bottom: 15px;
+}
+
+.help-content h3 {
+    font-size: clamp(16px, 3.5vw, 20px);
+    font-weight: 600;
+    color: #334155;
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+.help-content p {
+    margin-bottom: 15px;
+}
+
+.help-content strong {
+    color: #1e293b;
+    font-weight: 600;
+}
+
+.help-content .formula {
+    background: #f1f5f9;
+    padding: 10px 15px;
+    border-radius: 8px;
+    margin: 10px 0;
+    font-family: 'Cambria Math', 'Times New Roman', 'STIX Two Math', serif;
+    border-left: 4px solid #3b82f6;
+    font-size: clamp(15px, 3.8vw, 18px);
+    letter-spacing: 0.02em;
+}
+
+.help-content .math {
+    font-family: 'Cambria Math', 'Times New Roman', 'STIX Two Math', serif;
+    font-weight: 500;
+    color: #1e293b;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+}
+
+.help-content .sqrt {
+    font-family: 'Cambria Math', 'Segoe UI Symbol', 'Times New Roman', serif;
+    font-size: 1.1em;
+    font-weight: 500;
+}
+
+.game-screen {
+    padding: 20px;
+    justify-content: space-between;
+}
+
+.game-header {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+    z-index: 250;
+    background: rgba(248, 250, 252, 0.95);
+    padding: 10px 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.score, .timer {
+    font-size: clamp(14px, 3.5vw, 18px);
+    font-weight: 600;
+    text-shadow: none;
+    line-height: 1.4;
+}
+
+.timer {
+    color: #ef4444;
+}
+
+.question-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    margin: 20px 0;
+    padding-top: 40px;
+}
+
+.question {
+    font-size: clamp(26px, 7vw, 48px);
+    font-weight: 600;
+    margin-bottom: 5px;
+    text-align: center;
+    color: #1e293b;
+    text-shadow: none;
+    line-height: 1.3;
+    min-height: 100px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.answer-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    grid-template-rows: repeat(4, 1fr);
+    gap: 10px;
+    width: 100%;
+    max-width: 400px;
+    margin-top: 5px;
+}
+
+.answer-grid-12 {
+    display: grid;
+    grid-template-columns: 1fr 1fr 1fr;
+    grid-template-rows: repeat(4, 1fr);
+    gap: 8px;
+    width: 100%;
+    max-width: 500px;
+    margin-top: 5px;
+}
+
+/* 分数表示用スタイル */
+.fraction {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    vertical-align: middle;
+    font-size: clamp(20px, 5vw, 32px);
+}
+
+.fraction .numerator {
+    border-bottom: 3px solid currentColor;
+    padding: 2px 8px;
+}
+
+.fraction .denominator {
+    padding: 2px 8px;
+}
+
+.answer-btn {
+    background: white;
+    border: 2px solid #e2e8f0;
+    color: #475569;
+    padding: 15px 10px;
+    font-size: clamp(18px, 4.5vw, 28px);
+    font-family: inherit;
+    cursor: pointer;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    min-height: 70px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.answer-btn:hover {
+    background: #f1f5f9;
+    border-color: #3b82f6;
+    box-shadow: 0 4px 8px rgba(59, 130, 246, 0.15);
+}
+
+.answer-btn.selected {
+    background: #3b82f6;
+    border-color: #3b82f6;
+    color: white;
+    box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+}
+
+.answer-btn.correct {
+    background: #10b981;
+    border-color: #10b981;
+    color: white;
+    animation: correct-flash 0.5s ease;
+}
+
+.answer-btn.wrong {
+    background: #ef4444;
+    border-color: #ef4444;
+    color: white;
+    animation: wrong-flash 0.5s ease;
+}
+
+@keyframes correct-flash {
+    0%, 100% { background: #10b981; }
+    50% { background: #34d399; }
+}
+
+@keyframes wrong-flash {
+    0%, 100% { background: #ef4444; }
+    50% { background: #f87171; }
+}
+
+.result-screen {
+    padding: 10px;
+    justify-content: flex-start;
+}
+
+.result-header {
+    margin-bottom: 15px;
+    padding-top: 50px;
+}
+
+.result-title {
+    font-size: clamp(20px, 5vw, 36px);
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: #1e293b;
+    text-shadow: none;
+}
+
+.result-stats {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin-bottom: 15px;
+}
+
+.stat-item {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 15px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.stat-label {
+    font-size: clamp(12px, 3vw, 16px);
+    margin-bottom: 5px;
+    opacity: 0.8;
+}
+
+.stat-value {
+    font-size: clamp(16px, 4vw, 24px);
+    font-weight: 700;
+    text-shadow: none;
+}
+
+.history {
+    background: white;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    padding: 15px;
+    margin-bottom: 10px;
+    flex: 1;
+    overflow-y: auto;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    min-height: 200px;
+}
+
+.history-title {
+    font-size: clamp(14px, 3.5vw, 18px);
+    margin-bottom: 10px;
+    font-weight: 700;
+    display: flex;
+    align-items: center;
+    position: relative;
+}
+
+.history-title-center {
+    flex: 1;
+    text-align: center;
+}
+
+.history-title-right {
+    position: absolute;
+    right: 0;
+}
+
+.history-item {
+    font-size: clamp(12px, 3vw, 14px);
+    margin-bottom: 8px;
+    padding: 8px;
+    background: #f8fafc;
+    border-radius: 8px;
+    line-height: 1.3;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 10px;
+}
+
+.history-item.correct {
+    color: #10b981;
+}
+
+.history-item.wrong {
+    color: #ef4444;
+}
+
+.history-item-content {
+    flex: 1;
+}
+
+.history-item-time {
+    flex-shrink: 0;
+    font-weight: 600;
+    opacity: 0.7;
+    white-space: nowrap;
+}
+
+/* 履歴表示用の分数スタイル */
+.history-fraction {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    vertical-align: middle;
+    font-size: 0.8em;
+    line-height: 1.1;
+}
+
+.history-fraction .numerator {
+    border-bottom: 2px solid currentColor;
+    padding: 1px 4px;
+}
+
+.history-fraction .denominator {
+    padding: 1px 4px;
+}
+
+.factors-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+    width: 100%;
+    max-width: 400px;
+    margin-top: 5px;
+}
+
+.factors-grid .answer-btn[data-value="square"] {
+    background: #f59e0b;
+    border-color: #f59e0b;
+    color: white;
+}
+
+.factors-grid .answer-btn[data-value="square"]:hover {
+    background: #d97706;
+    box-shadow: 0 4px 8px rgba(245, 158, 11, 0.3);
+}
+
+.audio-toggle {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: white;
+    border: 2px solid #e2e8f0;
+    color: #64748b;
+    padding: 8px 16px;
+    font-size: clamp(11px, 2.8vw, 15px);
+    font-family: inherit;
+    cursor: pointer;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    justify-content: center;
+    z-index: 10;
+}
+
+@media (max-width: 480px) {
+    .audio-toggle {
+        padding: 6px 12px;
+        font-size: 11px;
+        gap: 4px;
+    }
+}
+
+.audio-toggle:hover {
+    background: #f1f5f9;
+    border-color: #3b82f6;
+    box-shadow: 0 4px 8px rgba(59, 130, 246, 0.15);
+}
+
+.audio-toggle.active {
+    background: #3b82f6;
+    border-color: #3b82f6;
+    color: white;
+}
+
+/* KEC数学科ラボへのリンク（左上） */
+.lab-link {
+    position: absolute;
+    top: 15px;
+    left: 15px;
+    background: white;
+    border: 2px solid #e2e8f0;
+    color: #64748b;
+    padding: 8px 12px;
+    font-size: clamp(10px, 2.4vw, 13px);
+    font-family: inherit;
+    font-weight: 500;
+    text-decoration: none;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    display: flex;
+    align-items: center;
+    z-index: 10;
+}
+
+@media (max-width: 480px) {
+    .lab-link {
+        padding: 6px 10px;
+        font-size: 10px;
+    }
+}
+
+.lab-link:hover {
+    background: #f1f5f9;
+    border-color: #3b82f6;
+    color: #3b82f6;
+    box-shadow: 0 4px 8px rgba(59, 130, 246, 0.15);
+}
+
+/* コンボ表示とヘルプボタンのコンテナ */
+.combo-help-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin: 10px 0;
+    min-height: 45px;
+    position: relative;
+}
+
+.combo-display {
+    font-size: clamp(16px, 4vw, 28px);
+    font-weight: 700;
+    color: #f59e0b;
+    text-align: center;
+    min-height: 35px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transform: scale(0.5);
+    transition: all 0.3s ease;
+    flex: 1;
+}
+
+.combo-display.show {
+    opacity: 1;
+    transform: scale(1.2);
+    animation: combo-bounce 0.6s ease;
+}
+
+@keyframes combo-bounce {
+    0% { transform: scale(0.5); opacity: 0; }
+    50% { transform: scale(1.3); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* ヘルプボタン */
+.help-button {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 8px 16px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border: none;
+    border-radius: 20px;
+    font-size: clamp(12px, 3vw, 16px);
+    font-weight: 600;
+    cursor: pointer;
+    opacity: 0;
+    pointer-events: none;
+    transform: scale(0.5);
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 15px rgba(102, 126, 234, 0.4);
+    min-height: 45px;
+    white-space: nowrap;
+}
+
+.help-button.show {
+    opacity: 1;
+    pointer-events: auto;
+    transform: scale(1);
+    animation: help-button-appear 0.5s ease;
+}
+
+.help-button:hover {
+    transform: scale(1.05);
+    box-shadow: 0 6px 20px rgba(102, 126, 234, 0.6);
+}
+
+.help-button:active {
+    transform: scale(0.95);
+}
+
+@keyframes help-button-appear {
+    0% { transform: scale(0.5); opacity: 0; }
+    50% { transform: scale(1.1); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* 正解選択肢を光らせるスタイル */
+.answer-btn.hint-highlight {
+    animation: hint-glow 1.5s ease-in-out infinite;
+    box-shadow: 0 0 20px rgba(34, 197, 94, 0.8), 0 0 40px rgba(34, 197, 94, 0.4);
+}
+
+@keyframes hint-glow {
+    0%, 100% {
+        box-shadow: 0 0 20px rgba(34, 197, 94, 0.8), 0 0 40px rgba(34, 197, 94, 0.4);
+        border-color: #22c55e;
+    }
+    50% {
+        box-shadow: 0 0 30px rgba(34, 197, 94, 1), 0 0 60px rgba(34, 197, 94, 0.6);
+        border-color: #16a34a;
+    }
+}
+
+/* コンボ継続ゲージ */
+.combo-gauge-container {
+    width: 100%;
+    max-width: 400px;
+    margin: 0 auto 20px auto;
+    padding: 0 10px;
+}
+
+.combo-gauge-label {
+    font-size: clamp(13px, 3.5vw, 17px);
+    font-weight: 600;
+    margin-bottom: 5px;
+    text-align: center;
+    color: #64748b;
+}
+
+.combo-gauge-bar {
+    width: 100%;
+    height: 20px;
+    background: #e2e8f0;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.1);
+    position: relative;
+}
+
+.combo-gauge-fill {
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(90deg, #10b981, #34d399);
+    border-radius: 10px;
+    transition: width 0.1s linear;
+    box-shadow: 0 0 10px rgba(16, 185, 129, 0.5);
+}
+
+.combo-gauge-fill.warning {
+    background: linear-gradient(90deg, #f59e0b, #fbbf24);
+    box-shadow: 0 0 10px rgba(245, 158, 11, 0.5);
+}
+
+.combo-gauge-fill.danger {
+    background: linear-gradient(90deg, #ef4444, #f87171);
+    box-shadow: 0 0 10px rgba(239, 68, 68, 0.5);
+    animation: gauge-pulse 0.5s ease-in-out infinite;
+}
+
+@keyframes gauge-pulse {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+/* カウントダウンオーバーレイ */
+.countdown-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.8);
+    display: none;
+    justify-content: center;
+    align-items: center;
+    z-index: 300;
+}
+
+.countdown-overlay.show {
+    display: flex;
+}
+
+.countdown-number {
+    font-size: clamp(80px, 20vw, 200px);
+    font-weight: 700;
+    color: white;
+    animation: countdown-pulse 1s ease;
+}
+
+@keyframes countdown-pulse {
+    0% { transform: scale(0.5); opacity: 0; }
+    50% { transform: scale(1.2); opacity: 1; }
+    100% { transform: scale(1); opacity: 1; }
+}
+
+/* ゲーム画面のコントロールボタン */
+.game-controls-fixed {
+    position: fixed;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    gap: 10px;
+    z-index: 250;
+}
+
+.control-btn {
+    background: white;
+    border: 2px solid #e2e8f0;
+    color: #64748b;
+    padding: 8px 16px;
+    font-size: clamp(12px, 3vw, 14px);
+    font-family: inherit;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+    font-weight: 500;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.control-btn:hover {
+    background: #f1f5f9;
+    border-color: #3b82f6;
+    color: #3b82f6;
+    box-shadow: 0 4px 8px rgba(59, 130, 246, 0.15);
+}
+
+.control-btn:active {
+    transform: translateY(1px);
+}
+
+/* x文字のみを数学的なフォントにする */
+.math-x {
+    font-family: 'Times New Roman', serif;
+    font-style: italic;
+    font-weight: bold;
+}
+
+/* √記号を横棒が長いフォントで表示 */
+.sqrt-symbol {
+    font-family: 'Cambria Math', 'STIX Two Math', 'Latin Modern Math', 'STIXGeneral', serif;
+    font-size: 1.1em;
+}
+
+/* 平方根の表示スタイル（数字の上に横棒） */
+.sqrt-wrapper {
+    display: inline-block;
+    position: relative;
+    white-space: nowrap;
+    vertical-align: baseline;
+}
+
+.sqrt-content {
+    border-top: 2px solid currentColor;
+    display: inline-block;
+    padding: 0 3px;
+    margin-left: -2px;
+    vertical-align: baseline;
+}
+
+/* ボタン内の平方根表示を中央揃えに */
+.answer-btn .sqrt-wrapper {
+    vertical-align: middle;
+}
+
+/* 問題文内の√記号の横棒を太く */
+.question .sqrt-content {
+    border-top: 5px solid currentColor;
+}
+
+/* 時間選択ボタンのスタイル */
+.time-btn {
+    min-width: 120px;
+    padding: 6px 20px;
+    font-size: clamp(14px, 3.5vw, 18px) !important;
+}
+
+.time-btn.active {
+    background: linear-gradient(45deg, #059669, #10b981) !important;
+    border-color: #10b981 !important;
+}
+
+/* 難易度選択ボタンのスタイル */
+.difficulty-btn {
+    min-width: 120px;
+    padding: 6px 20px;
+    font-size: clamp(14px, 3.5vw, 18px) !important;
+}
+
+.difficulty-btn.active[data-difficulty="normal"] {
+    background: linear-gradient(45deg, #059669, #10b981) !important;
+    border-color: #10b981 !important;
+}
+
+.difficulty-btn.active[data-difficulty="hard"] {
+    background: linear-gradient(45deg, #dc2626, #ef4444) !important;
+    border-color: #ef4444 !important;
+}
+
+@media (max-width: 480px) {
+    .container {
+        padding: 5px;
+    }
+
+    .game-header {
+        margin-bottom: 5px;
+    }
+
+    /* タイトル画面のボタンを小さく */
+    .time-btn, .difficulty-btn {
+        padding: 4px 15px;
+    }
+
+    /* プレイ画面の縦間隔を極力小さく */
+    .question-area {
+        margin: 5px 0;
+        padding-top: 10px;
+    }
+
+    .combo-gauge-container {
+        margin: 0 auto 5px auto;
+    }
+
+    .combo-help-container {
+        margin: 3px 0;
+        min-height: 30px;
+    }
+
+    .combo-display {
+        min-height: 25px;
+    }
+
+    .question {
+        margin-bottom: 3px;
+        min-height: 70px;
+    }
+
+    .answer-grid, .factors-grid, .answer-grid-12 {
+        gap: 6px;
+        margin-top: 3px;
+    }
+
+    .answer-btn {
+        min-height: 45px;
+        padding: 10px 6px;
+    }
+
+    /* スマートフォンでは問題文の√記号の横棒を細く */
+    .question .sqrt-content {
+        border-top: 2px solid currentColor;
+    }
+}
+
+/* 紙吹雪のコンテナ */
+.confetti-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 9999;
+    overflow: hidden;
+}
+
+/* 紙吹雪の個別要素 */
+.confetti {
+    position: absolute;
+    width: 10px;
+    height: 10px;
+    background: #f59e0b;
+    opacity: 0;
+}
+
+/* 左下から飛び出す紙吹雪 */
+.confetti.from-left {
+    animation: confetti-burst-left 1s ease-out forwards;
+}
+
+/* 右下から飛び出す紙吹雪 */
+.confetti.from-right {
+    animation: confetti-burst-right 1s ease-out forwards;
+}
+
+@keyframes confetti-burst-left {
+    0% {
+        opacity: 1;
+        transform: translate(0, 0) rotate(0deg);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(50vw, -40vh) rotate(720deg);
+    }
+}
+
+@keyframes confetti-burst-right {
+    0% {
+        opacity: 1;
+        transform: translate(0, 0) rotate(0deg);
+    }
+    100% {
+        opacity: 0;
+        transform: translate(-50vw, -40vh) rotate(-720deg);
+    }
+}

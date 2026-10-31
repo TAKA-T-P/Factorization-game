@@ -1,0 +1,1110 @@
+/* はじめての数学講座（チュートリアル）のスタイル */
+
+:root {
+    --tu-text: #1e293b;
+    --tu-muted: #64748b;
+    --tu-line: #e2e8f0;
+    --tu-card: #ffffff;
+    --tu-ok: #059669;
+    --tu-ok-soft: #ecfdf5;
+    --tu-ng: #dc2626;
+    --tu-ng-soft: #fef2f2;
+    --tu-math-font: 'Cambria Math', 'STIX Two Math', 'Times New Roman', serif;
+
+    /* 項の色（js/tutorial/renderer.js の LINK_COLORS と対応） */
+    --tu-c1: #2563eb;
+    --tu-c2: #ea580c;
+    --tu-c3: #059669;
+    --tu-c4: #9333ea;
+    --tu-c5: #db2777;
+    --tu-c6: #0891b2;
+}
+
+/* 分野ごとの色（展開：青、因数分解：緑、平方根：紫） */
+.tu-theme-expand {
+    --tu-accent: #2563eb;
+    --tu-accent-dark: #1d4ed8;
+    --tu-accent-soft: #eff6ff;
+}
+
+.tu-theme-factor {
+    --tu-accent: #059669;
+    --tu-accent-dark: #047857;
+    --tu-accent-soft: #ecfdf5;
+}
+
+.tu-theme-root {
+    --tu-accent: #7c3aed;
+    --tu-accent-dark: #6d28d9;
+    --tu-accent-soft: #f5f3ff;
+}
+
+/* ===== タイトル画面の入口ボタン ===== */
+.tu-entry-btn {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    width: min(92vw, 440px);
+    margin: 0 auto 15px;
+    padding: 8px 16px;
+    border: 2px solid #6366f1;
+    border-radius: 14px;
+    background: linear-gradient(135deg, #eef2ff 0%, #ffffff 100%);
+    color: #3730a3;
+    font-family: inherit;
+    cursor: pointer;
+    box-shadow: 0 4px 10px rgba(99, 102, 241, 0.2);
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.tu-entry-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 14px rgba(99, 102, 241, 0.3);
+}
+
+.tu-entry-main {
+    font-size: clamp(16px, 4.2vw, 21px);
+    font-weight: 700;
+}
+
+.tu-entry-sub {
+    font-size: clamp(10px, 2.8vw, 13px);
+    color: #4f46e5;
+    font-weight: 500;
+}
+
+/* 「？」解説の下のリンク */
+.tu-help-link {
+    max-width: 800px;
+    margin: 10px auto 30px;
+    text-align: center;
+}
+
+/* ===== 共通ボタン ===== */
+.tu-btn {
+    font-family: inherit;
+    font-size: clamp(14px, 3.6vw, 16px);
+    font-weight: 600;
+    min-height: 44px;
+    padding: 8px 16px;
+    border-radius: 10px;
+    cursor: pointer;
+    border: 2px solid transparent;
+    transition: background 0.2s ease, transform 0.2s ease, box-shadow 0.2s ease;
+    line-height: 1.3;
+}
+
+.tu-btn:disabled {
+    cursor: not-allowed;
+    opacity: 0.55;
+}
+
+.tu-btn-primary {
+    background: var(--tu-accent, #3b82f6);
+    border-color: var(--tu-accent, #3b82f6);
+    color: #fff;
+    box-shadow: 0 3px 6px rgba(15, 23, 42, 0.15);
+}
+
+.tu-btn-primary:not(:disabled):hover {
+    background: var(--tu-accent-dark, #2563eb);
+    transform: translateY(-1px);
+}
+
+.tu-btn-sub {
+    background: #fff;
+    border-color: var(--tu-line);
+    color: #475569;
+}
+
+.tu-btn-sub:not(:disabled):hover {
+    border-color: var(--tu-accent, #3b82f6);
+    color: var(--tu-accent, #3b82f6);
+}
+
+.tu-btn-game {
+    background: linear-gradient(45deg, #f59e0b, #ea580c);
+    border-color: #ea580c;
+    color: #fff;
+    font-size: clamp(15px, 4vw, 18px);
+    box-shadow: 0 4px 10px rgba(234, 88, 12, 0.3);
+}
+
+/* ===== 画面の骨組み ===== */
+.container:has(.tu-screen.active) {
+    height: 100dvh;
+}
+
+.tu-screen {
+    justify-content: flex-start;
+    text-align: left;
+    color: var(--tu-text);
+    max-width: 860px;
+    margin: 0 auto;
+    min-height: 0;
+}
+
+.tu-topbar {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 0 8px;
+    border-bottom: 2px solid var(--tu-line);
+    flex-shrink: 0;
+}
+
+.tu-topbar .tu-btn {
+    min-height: 38px;
+    padding: 6px 10px;
+    font-size: clamp(12px, 3.2vw, 14px);
+    flex-shrink: 0;
+}
+
+.tu-topbar-title {
+    flex: 1;
+    min-width: 0;
+    font-weight: 700;
+    font-size: clamp(15px, 4vw, 20px);
+    text-align: center;
+}
+
+.tu-heading-course,
+.tu-heading-lesson {
+    display: block;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.tu-heading-course {
+    font-size: clamp(11px, 2.8vw, 13px);
+    color: var(--tu-accent, var(--tu-muted));
+    font-weight: 600;
+}
+
+.tu-heading-lesson {
+    font-size: clamp(14px, 3.8vw, 18px);
+}
+
+.tu-scroll {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overflow-x: hidden;
+    -webkit-overflow-scrolling: touch;
+}
+
+.tu-page {
+    padding: 12px 2px 24px;
+}
+
+.tu-lead {
+    color: var(--tu-muted);
+    margin-bottom: 12px;
+    font-size: clamp(13px, 3.4vw, 15px);
+}
+
+.tu-card {
+    background: var(--tu-card);
+    border: 2px solid var(--tu-line);
+    border-radius: 16px;
+    padding: clamp(14px, 4vw, 24px);
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+}
+
+/* ===== 進捗バー ===== */
+.tu-progress {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin: 8px 0;
+}
+
+.tu-progress-bar {
+    flex: 1;
+    height: 10px;
+    border-radius: 999px;
+    background: #e2e8f0;
+    overflow: hidden;
+}
+
+.tu-progress-bar span {
+    display: block;
+    height: 100%;
+    background: var(--tu-accent, #3b82f6);
+    border-radius: 999px;
+    transition: width 0.4s ease;
+}
+
+.tu-progress-text {
+    font-size: 13px;
+    color: var(--tu-muted);
+    white-space: nowrap;
+}
+
+/* ===== 講座選択 ===== */
+.tu-resume {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 14px;
+    margin-bottom: 14px;
+    border-radius: 12px;
+    background: var(--tu-accent-soft);
+    border: 2px dashed var(--tu-accent);
+}
+
+.tu-resume-text {
+    flex: 1 1 220px;
+    font-size: 14px;
+    font-weight: 600;
+}
+
+.tu-course-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    gap: 14px;
+}
+
+.tu-course-card {
+    background: #fff;
+    border: 2px solid var(--tu-line);
+    border-top: 6px solid var(--tu-accent);
+    border-radius: 16px;
+    padding: 16px;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 4px 12px rgba(15, 23, 42, 0.06);
+}
+
+.tu-course-head {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.tu-course-icon {
+    font-size: 26px;
+}
+
+.tu-course-title {
+    font-size: clamp(17px, 4.4vw, 21px);
+    color: var(--tu-accent-dark);
+}
+
+.tu-course-desc {
+    font-size: 14px;
+    line-height: 1.7;
+    color: #475569;
+    margin: 8px 0 4px;
+    flex: 1;
+}
+
+.tu-course-meta {
+    font-size: 13px;
+    color: var(--tu-muted);
+}
+
+.tu-course-btn {
+    margin-top: 6px;
+}
+
+/* ===== レッスン一覧 ===== */
+.tu-lessons-head {
+    margin-bottom: 12px;
+}
+
+.tu-lesson-list {
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.tu-lesson-item {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    grid-template-areas: "num info" "actions actions";
+    gap: 6px 12px;
+    align-items: start;
+    background: #fff;
+    border: 2px solid var(--tu-line);
+    border-left: 6px solid var(--tu-accent);
+    border-radius: 14px;
+    padding: 12px 14px;
+}
+
+.tu-lesson-item.is-done {
+    background: var(--tu-accent-soft);
+}
+
+.tu-lesson-num {
+    grid-area: num;
+    font-family: 'Orbitron', sans-serif;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--tu-accent);
+    padding-top: 3px;
+    white-space: nowrap;
+}
+
+.tu-lesson-info {
+    grid-area: info;
+    min-width: 0;
+}
+
+.tu-lesson-title {
+    font-weight: 700;
+    font-size: clamp(15px, 4vw, 18px);
+}
+
+.tu-lesson-goal {
+    font-size: 13px;
+    color: #475569;
+    margin: 2px 0 4px;
+    line-height: 1.6;
+}
+
+.tu-status {
+    display: inline-block;
+    font-size: 12px;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: #f1f5f9;
+    color: var(--tu-muted);
+    font-weight: 600;
+}
+
+.tu-status-done {
+    background: var(--tu-ok-soft);
+    color: var(--tu-ok);
+}
+
+.tu-status-doing {
+    background: #fef3c7;
+    color: #92400e;
+}
+
+.tu-lesson-actions {
+    grid-area: actions;
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+    flex-wrap: wrap;
+}
+
+@media (min-width: 640px) {
+    .tu-lesson-item {
+        grid-template-columns: auto 1fr auto;
+        grid-template-areas: "num info actions";
+        align-items: center;
+    }
+}
+
+/* ===== STEP 表示 ===== */
+.tu-stepbar {
+    flex-shrink: 0;
+    padding: 8px 0 4px;
+}
+
+.tu-steps {
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 4px;
+}
+
+.tu-step {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    font-size: clamp(9px, 2.5vw, 12px);
+    color: var(--tu-muted);
+    text-align: center;
+    line-height: 1.25;
+}
+
+.tu-step-num {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 12px;
+    background: #e2e8f0;
+    color: #475569;
+}
+
+.tu-step.is-past .tu-step-num {
+    background: var(--tu-accent-soft);
+    color: var(--tu-accent);
+    border: 2px solid var(--tu-accent);
+}
+
+.tu-step.is-current {
+    color: var(--tu-text);
+    font-weight: 700;
+}
+
+.tu-step.is-current .tu-step-num {
+    background: var(--tu-accent);
+    color: #fff;
+    box-shadow: 0 0 0 3px var(--tu-accent-soft);
+}
+
+.tu-step-progress {
+    height: 4px;
+    margin-top: 6px;
+    border-radius: 999px;
+    background: #e2e8f0;
+    overflow: hidden;
+}
+
+.tu-step-progress span {
+    display: block;
+    height: 100%;
+    background: var(--tu-accent);
+    transition: width 0.3s ease;
+}
+
+.tu-section-label {
+    font-size: 13px;
+    font-weight: 700;
+    color: var(--tu-accent);
+    margin-bottom: 8px;
+}
+
+/* ===== 下部の「戻る」「次へ」 ===== */
+.tu-navbar {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    padding: 8px 0 calc(6px + env(safe-area-inset-bottom, 0px));
+    border-top: 2px solid var(--tu-line);
+    background: inherit;
+}
+
+.tu-navbar .tu-btn {
+    min-width: 96px;
+    min-height: 48px;
+}
+
+.tu-nav-next {
+    flex: 0 1 220px;
+}
+
+.tu-nav-count {
+    font-size: 13px;
+    color: var(--tu-muted);
+}
+
+/* ===== 解説（STEP 1） ===== */
+.tu-learn {
+    font-size: clamp(15px, 3.9vw, 17px);
+    line-height: 1.85;
+}
+
+.tu-learn-heading {
+    font-size: clamp(18px, 4.8vw, 24px);
+    color: var(--tu-accent-dark);
+    margin-bottom: 10px;
+    line-height: 1.4;
+}
+
+.tu-learn p {
+    margin-bottom: 10px;
+}
+
+.tu-learn strong {
+    color: var(--tu-accent-dark);
+    background: linear-gradient(transparent 62%, var(--tu-accent-soft) 62%);
+}
+
+.tu-learn-math,
+.tu-problem-math,
+.tu-work {
+    margin: 12px 0;
+    padding: 12px;
+    border-radius: 12px;
+    background: #f8fafc;
+    border-left: 5px solid var(--tu-accent);
+    overflow-x: auto;
+}
+
+.tu-point {
+    margin-top: 12px;
+    padding: 10px 12px;
+    border-radius: 12px;
+    background: #fffbeb;
+    border: 2px solid #fcd34d;
+    font-size: clamp(14px, 3.7vw, 16px);
+}
+
+.tu-point-label {
+    display: inline-block;
+    margin-right: 8px;
+    padding: 0 8px;
+    border-radius: 6px;
+    background: #f59e0b;
+    color: #fff;
+    font-size: 12px;
+    font-weight: 700;
+}
+
+/* ===== 数式 ===== */
+.tu-math,
+.tu-formula {
+    font-family: var(--tu-math-font);
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+}
+
+.tu-var {
+    font-family: 'Times New Roman', serif;
+    font-style: italic;
+}
+
+.tu-line {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: center;
+    column-gap: 10px;
+    padding: 2px 0;
+}
+
+.tu-line .tu-formula {
+    font-size: clamp(19px, 5.4vw, 30px);
+}
+
+/* 解説・問題の式は、幅が足りなければ「=」の前後で折り返す（アニメーションの式は矢印のため折り返さない） */
+.tu-learn-math .tu-line .tu-formula,
+.tu-problem-math .tu-line .tu-formula,
+.tu-work .tu-line .tu-formula {
+    font-size: clamp(18px, 5vw, 26px);
+    white-space: normal;
+}
+
+.tu-fill-template .tu-math {
+    white-space: normal;
+}
+
+.tu-sqrt,
+.tu-frac,
+.tu-term,
+.tu-blank {
+    white-space: nowrap;
+}
+
+.tu-line-note {
+    font-size: clamp(12px, 3.2vw, 14px);
+    color: var(--tu-muted);
+    font-family: inherit;
+}
+
+.tu-line-small .tu-formula {
+    font-size: clamp(15px, 4.2vw, 22px) !important;
+}
+
+.tu-line-result .tu-formula {
+    font-weight: 700;
+    padding: 2px 10px;
+    border-radius: 10px;
+    background: var(--tu-accent-soft);
+    border: 2px solid var(--tu-accent);
+}
+
+.tu-line-muted .tu-formula {
+    color: #94a3b8;
+}
+
+.tu-line-arrow {
+    color: var(--tu-accent);
+    font-weight: 700;
+    align-items: center;
+}
+
+.tu-arrow-down {
+    font-size: 22px;
+}
+
+.tu-arrow-label {
+    font-size: 13px;
+}
+
+.tu-term {
+    display: inline-block;
+    padding: 0 2px;
+    border-radius: 5px;
+    border-bottom: 3px solid transparent;
+    transition: background 0.3s ease;
+}
+
+/* 色だけでなく下線の形でも区別できるようにする */
+.tu-c1 { color: var(--tu-c1); background: rgba(37, 99, 235, 0.10); border-bottom: 3px solid var(--tu-c1); }
+.tu-c2 { color: var(--tu-c2); background: rgba(234, 88, 12, 0.10); border-bottom: 3px double var(--tu-c2); }
+.tu-c3 { color: var(--tu-c3); background: rgba(5, 150, 105, 0.10); border-bottom: 3px dashed var(--tu-c3); }
+.tu-c4 { color: var(--tu-c4); background: rgba(147, 51, 234, 0.10); border-bottom: 3px dotted var(--tu-c4); }
+.tu-c5 { color: var(--tu-c5); background: rgba(219, 39, 119, 0.10); border-bottom: 3px solid var(--tu-c5); }
+.tu-c6 { color: var(--tu-c6); background: rgba(8, 145, 178, 0.10); border-bottom: 3px dashed var(--tu-c6); }
+
+.tu-focus {
+    outline: 2.5px solid currentColor;
+    outline-offset: 2px;
+    font-weight: 700;
+}
+
+.tu-strike {
+    text-decoration: line-through;
+    text-decoration-thickness: 2px;
+    opacity: 0.55;
+}
+
+.tu-sqrt {
+    display: inline-flex;
+    align-items: flex-start;
+    white-space: nowrap;
+}
+
+.tu-sqrt-sign {
+    font-size: 1.1em;
+    line-height: 1;
+}
+
+.tu-sqrt-body {
+    border-top: 2px solid currentColor;
+    padding: 0 2px;
+    margin-left: -1px;
+    line-height: 1.15;
+}
+
+.tu-frac {
+    display: inline-flex;
+    flex-direction: column;
+    align-items: center;
+    vertical-align: middle;
+    font-size: 0.9em;
+    margin: 0 2px;
+}
+
+.tu-frac-num {
+    border-bottom: 2px solid currentColor;
+    padding: 0 4px 1px;
+}
+
+.tu-frac-den {
+    padding: 2px 4px 0;
+}
+
+/* ===== アニメーション（STEP 2） ===== */
+.tu-anim-title {
+    font-weight: 700;
+    color: var(--tu-accent-dark);
+    margin-bottom: 6px;
+    text-align: center;
+}
+
+.tu-anim-stage {
+    position: relative;
+    padding: 34px 4px 12px;
+    border-radius: 12px;
+    background: #f8fafc;
+    overflow-x: auto;
+    overflow-y: hidden;
+}
+
+.tu-anim-lines {
+    position: relative;
+    z-index: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 22px;
+}
+
+.tu-links {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    overflow: visible;
+    z-index: 2;
+}
+
+.tu-link {
+    fill: none;
+    stroke-width: 2.5;
+    stroke-linecap: round;
+}
+
+.tu-link-draw {
+    animation: tu-draw 0.7s ease forwards;
+}
+
+.tu-anim-caption {
+    margin-top: 12px;
+    min-height: 3.4em;
+    font-size: clamp(14px, 3.8vw, 17px);
+    line-height: 1.75;
+    text-align: center;
+}
+
+.tu-anim-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 10px;
+}
+
+.tu-anim-count {
+    font-size: 13px;
+    color: var(--tu-muted);
+}
+
+.tu-enter {
+    animation: tu-fade-up 0.6s ease both;
+}
+
+.tu-pop {
+    animation: tu-pop 0.7s ease both;
+    animation-delay: 0.2s;
+}
+
+@keyframes tu-fade-up {
+    from { opacity: 0; transform: translateY(10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes tu-pop {
+    0% { opacity: 0; transform: scale(0.6); }
+    60% { opacity: 1; transform: scale(1.15); }
+    100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes tu-draw {
+    to { stroke-dashoffset: 0; }
+}
+
+@keyframes tu-shake {
+    0%, 100% { transform: translateX(0); }
+    25% { transform: translateX(-5px); }
+    75% { transform: translateX(5px); }
+}
+
+/* ===== ミニ問題（STEP 3） ===== */
+.tu-problem-type {
+    display: inline-block;
+    font-size: 12px;
+    font-weight: 700;
+    color: var(--tu-accent);
+    background: var(--tu-accent-soft);
+    padding: 2px 10px;
+    border-radius: 999px;
+    margin-bottom: 8px;
+}
+
+.tu-problem-question {
+    font-size: clamp(15px, 4vw, 18px);
+    font-weight: 600;
+    line-height: 1.7;
+}
+
+.tu-options {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+    gap: 10px;
+    margin-top: 12px;
+}
+
+.tu-options-compact,
+.tu-options-numbers {
+    grid-template-columns: repeat(auto-fit, minmax(64px, 1fr));
+}
+
+.tu-option {
+    min-height: 54px;
+    padding: 8px 10px;
+    border: 2px solid var(--tu-line);
+    border-radius: 12px;
+    background: #fff;
+    color: var(--tu-text);
+    font-family: inherit;
+    font-size: clamp(16px, 4.4vw, 21px);
+    cursor: pointer;
+    transition: border-color 0.2s ease, background 0.2s ease;
+    touch-action: manipulation;
+}
+
+.tu-option .tu-math {
+    white-space: normal;
+}
+
+.tu-option:not(:disabled):hover {
+    border-color: var(--tu-accent);
+    background: var(--tu-accent-soft);
+}
+
+.tu-option.tu-selected {
+    border-color: var(--tu-accent);
+    background: var(--tu-accent-soft);
+    box-shadow: inset 0 0 0 2px var(--tu-accent);
+}
+
+.tu-option.tu-correct {
+    border-color: var(--tu-ok);
+    background: var(--tu-ok-soft);
+    box-shadow: inset 0 0 0 2px var(--tu-ok);
+}
+
+.tu-option.tu-correct::before {
+    content: '⭕ ';
+    font-size: 0.8em;
+}
+
+.tu-option.tu-wrong {
+    border-color: var(--tu-ng);
+    background: var(--tu-ng-soft);
+    animation: tu-shake 0.35s ease;
+}
+
+.tu-option.tu-wrong::before {
+    content: '✗ ';
+    color: var(--tu-ng);
+    font-size: 0.8em;
+}
+
+.tu-option:disabled {
+    cursor: default;
+}
+
+.tu-check-btn {
+    display: block;
+    margin: 12px auto 0;
+    min-width: 160px;
+}
+
+.tu-pair-target {
+    display: flex;
+    justify-content: center;
+    gap: 16px;
+    flex-wrap: wrap;
+    margin-top: 10px;
+    font-size: clamp(15px, 4vw, 18px);
+}
+
+.tu-pair-target span {
+    padding: 4px 12px;
+    border-radius: 10px;
+    background: var(--tu-accent-soft);
+    border: 2px solid var(--tu-accent);
+}
+
+.tu-pair-calc {
+    margin-top: 12px;
+    min-height: 3em;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+}
+
+.tu-calc-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: clamp(17px, 4.6vw, 22px);
+}
+
+.tu-calc-row.ok .tu-mark { color: var(--tu-ok); font-weight: 700; }
+.tu-calc-row.ng .tu-mark { color: var(--tu-ng); font-weight: 700; }
+
+.tu-calc-wait {
+    color: var(--tu-muted);
+    font-size: 14px;
+}
+
+.tu-pair-result {
+    text-align: center;
+    font-size: clamp(20px, 5.4vw, 28px);
+    font-weight: 700;
+    color: var(--tu-ok);
+}
+
+.tu-fill-template {
+    text-align: center;
+    font-size: clamp(19px, 5.2vw, 28px);
+    margin: 12px 0;
+    overflow-x: auto;
+}
+
+.tu-blank {
+    display: inline-flex;
+    align-items: center;
+    gap: 2px;
+    min-width: 1.8em;
+    justify-content: center;
+    padding: 0 4px;
+    margin: 0 2px;
+    border: 2px dashed var(--tu-accent);
+    border-radius: 8px;
+    background: #fff;
+}
+
+.tu-blank small {
+    font-size: 0.5em;
+    color: var(--tu-accent);
+    font-family: inherit;
+}
+
+.tu-blank-filled {
+    border-style: solid;
+    background: var(--tu-accent-soft);
+}
+
+.tu-blank.tu-correct {
+    border-color: var(--tu-ok);
+    background: var(--tu-ok-soft);
+}
+
+.tu-blank.tu-wrong {
+    border-color: var(--tu-ng);
+    background: var(--tu-ng-soft);
+}
+
+.tu-fill-row + .tu-fill-row {
+    margin-top: 10px;
+}
+
+.tu-fill-label {
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--tu-accent);
+}
+
+.tu-fill-row .tu-options {
+    margin-top: 4px;
+}
+
+/* 正解・不正解のフィードバック */
+.tu-feedback {
+    margin-top: 14px;
+}
+
+.tu-feedback:empty {
+    display: none;
+}
+
+.tu-feedback-ok,
+.tu-feedback-ng {
+    padding: 12px 14px;
+    border-radius: 12px;
+    line-height: 1.75;
+    animation: tu-fade-up 0.35s ease both;
+}
+
+.tu-feedback-ok {
+    background: var(--tu-ok-soft);
+    border: 2px solid var(--tu-ok);
+}
+
+.tu-feedback-ng {
+    background: var(--tu-ng-soft);
+    border: 2px solid #fca5a5;
+}
+
+.tu-feedback-title {
+    font-weight: 700;
+    margin-bottom: 4px;
+}
+
+.tu-feedback-ok .tu-feedback-title { color: var(--tu-ok); }
+.tu-feedback-ng .tu-feedback-title { color: var(--tu-ng); }
+
+.tu-feedback-text {
+    font-size: clamp(14px, 3.8vw, 16px);
+}
+
+.tu-review-btn {
+    margin-top: 8px;
+}
+
+/* ===== レッスン完了（STEP 4） ===== */
+.tu-complete {
+    text-align: center;
+}
+
+.tu-complete-icon {
+    font-size: 56px;
+    animation: tu-pop 0.8s ease both;
+}
+
+.tu-complete-title {
+    font-family: 'Orbitron', sans-serif;
+    font-size: clamp(26px, 7vw, 38px);
+    color: var(--tu-accent);
+}
+
+.tu-complete-message {
+    font-size: clamp(16px, 4.2vw, 20px);
+    font-weight: 600;
+    margin: 6px 0 12px;
+}
+
+.tu-complete-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    max-width: 380px;
+    margin: 14px auto 0;
+}
+
+/* ===== 動きを減らす設定 ===== */
+@media (prefers-reduced-motion: reduce) {
+    .tu-enter,
+    .tu-pop,
+    .tu-complete-icon,
+    .tu-feedback-ok,
+    .tu-feedback-ng,
+    .tu-option.tu-wrong {
+        animation: none !important;
+    }
+
+    .tu-link-draw {
+        animation: none !important;
+        stroke-dashoffset: 0 !important;
+    }
+
+    .tu-progress-bar span,
+    .tu-step-progress span {
+        transition: none;
+    }
+}
+
+/* ===== 画面の高さが低いとき（タイトル画面の入口を小さく） ===== */
+/* 入口ボタンを追加した分、縦が短い画面ではタイトル画面をスクロールできるようにする */
+@media (max-height: 640px) {
+    .title-screen {
+        justify-content: safe center;
+        overflow-x: hidden;
+        overflow-y: auto;
+    }
+}
+
+@media (max-height: 700px) {
+    .tu-entry-btn {
+        padding: 5px 12px;
+        margin-bottom: 10px;
+    }
+
+    .tu-entry-sub {
+        font-size: 10px;
+    }
+}

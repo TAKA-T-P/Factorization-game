@@ -1,0 +1,25 @@
+{
+  "source": "pre-tutorial-refactor の動作 + 共通因数パターンのヒント修正（それ以外の出題・ヒントは一致を確認済み）",
+  "seeds": {
+    "1": {
+      "questions:expand:normal": "02001a74d85bc3b6af92461d64e6ae8f45c9d49ec0afc2e13f7c5fe01012a18d",
+      "questions:expand:hard": "cdbec8a4e30a3aafa0773748c635f8bc0bde1bbd17aae6580c1b9acfe58ed9ee",
+      "questions:factorize:normal": "1643d148fb90f4c07ec797221afd505309b50e5d57b9c85541db906b777983fa",
+      "questions:factorize:hard": "de98e97da92394c9966368020f257b6365e648179eafbd90216896c3b788862e",
+      "questions:squareRoot:normal": "87e06d4ae738d3892fc2cd0e02e39f66a1bd97ed7fd0a957a9e1025e8a1e5a56",
+      "questions:squareRoot:hard": "806b189256d8f954f3660e5045fd750d511189b04f5d5e794ca557ef6979be6b",
+      "ranks": "1f655fbd3e932d6927d814e3c03feff6f2dfdbce3e46bfef69980d2acf02d1fd",
+      "results": "f72543fbb4cb7bf4080c103cf1246e37621d16c2af03596031159883c70cc82a"
+    },
+    "20261031": {
+      "questions:expand:normal": "c535625ba14033d67b4f3600344798e2a104c971623ce5af397e8dd2d0fadc75",
+      "questions:expand:hard": "80d4f68ef2a56c21d4ad7900d4677c3db736cf313d0c97619d0089a3f3ed6b3d",
+      "questions:factorize:normal": "f218e6e7411d70de66cee2c94be5bd580ac64bd9568cbd8a7ef9097bc3d68ff3",
+      "questions:factorize:hard": "c94d1c8201d76a70c06ced799a63fd399366574f76913f1a0b9bee5d16d645df",
+      "questions:squareRoot:normal": "bf6b0243eefe9e8da6428f5524563fb724df63bf0e669dfdd53d624abfb7f15c",
+      "questions:squareRoot:hard": "799d60b1a6a61bae738be51ce5a69b0d3655dc7c34993b7953138025bd1336ae",
+      "ranks": "1f655fbd3e932d6927d814e3c03feff6f2dfdbce3e46bfef69980d2acf02d1fd",
+      "results": "f72543fbb4cb7bf4080c103cf1246e37621d16c2af03596031159883c70cc82a"
+    }
+  }
+}
