@@ -6,8 +6,6 @@
     icon: '🧩',
     title: '因数分解マスター講座',
     description: '展開の逆、「因数分解」。足して・かけての2つの数の探し方から、共通因数・発展問題まで学ぼう。',
-    gameMode: 'factorize',
-    gameName: '因数分解ラッシュ',
     lessons: [
         // ===== LESSON 1 =====
         {

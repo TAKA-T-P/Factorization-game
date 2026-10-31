@@ -149,7 +149,7 @@ test('全15レッスンを、まちがえながらでも最後まで進めて完
             assert.ok(done.textContent.includes('講座一覧へ戻る'));
             const isLast = i === course.lessons.length - 1;
             assert.equal(done.textContent.includes('次のレッスンへ'), !isLast, lesson.id);
-            assert.equal(done.textContent.includes('ゲームに挑戦！'), isLast, lesson.id);
+            assert.ok(!done.textContent.includes('ゲームに挑戦'), lesson.id);
             const saved = JSON.parse(window.localStorage.getItem(KEY));
             assert.equal(saved.version, 1);
             assert.equal(saved.lessons[lesson.id], true);
@@ -258,21 +258,6 @@ test('不正解のとき「解説を見直す」で STEP 1 に戻れる', async 
     wrong.click();
     content(window).querySelector('[data-action="review"]').click();
     assert.deepEqual({ ...currentPosition(window) }, { step: 1, kind: 'learn', index: 0 });
-    window.close();
-});
-
-test('講座の最終レッスンから、ノーマルでゲームを始められる（時間設定は引き継ぐ）', async () => {
-    const window = await loadApp({ seed: 9 });
-    window.document.getElementById('time180').click();
-    window.document.getElementById('difficultyHard').click();
-    playLesson(window, 'square-root-05', false);
-    clickByText(content(window), 'button', 'ゲームに挑戦！');
-    assert.equal(window.run('gameMode'), 'squareRoot');
-    assert.equal(window.run('difficultyMode'), 'normal');
-    assert.equal(window.run('timeMode'), 180);
-    assert.ok(!window.document.body.classList.contains('hard-mode'));
-    assert.ok(window.document.getElementById('countdownOverlay').classList.contains('show'));
-    window.run('goToTitle()');
     window.close();
 });
 

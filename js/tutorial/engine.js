@@ -223,6 +223,7 @@
         } else {
             completeLesson(content);
         }
+        Tutorial.render.fitFormulas(content);
 
         // 再開用に現在のSTEPを保存
         const p = getProgress();
@@ -269,7 +270,6 @@
         if (typeof playSound === 'function' && typeof gameOverJingle !== 'undefined') playSound(gameOverJingle);
 
         const nextLesson = course.lessons[lessonIndex + 1];
-        const isLast = !nextLesson;
         content.innerHTML = `
             <div class="tu-card tu-complete">
                 <div class="tu-complete-icon" aria-hidden="true">🎉</div>
@@ -277,7 +277,6 @@
                 <p class="tu-complete-message">${rich(lesson.clearMessage)}</p>
                 ${progressBar(countDone(course), course.lessons.length)}
                 <div class="tu-complete-actions">
-                    ${isLast ? `<button class="tu-btn tu-btn-game" onclick="Tutorial.playGame('${course.gameMode}')">🎮 ゲームに挑戦！（${course.gameName}・ノーマル）</button>` : ''}
                     ${nextLesson ? `<button class="tu-btn tu-btn-primary" onclick="Tutorial.startLesson('${nextLesson.id}')">次のレッスンへ →</button>` : ''}
                     <button class="tu-btn tu-btn-sub" onclick="Tutorial.startLesson('${lesson.id}')">もう一度復習する</button>
                     <button class="tu-btn tu-btn-sub" onclick="Tutorial.openCourse('${course.id}')">講座一覧へ戻る</button>
@@ -318,12 +317,6 @@
         else openCourses();
     }
 
-    // 講座の最後からゲームへ（難易度はノーマル、制限時間はタイトル画面の設定）
-    function playGame(mode) {
-        selectDifficulty('normal');
-        startGame(mode);
-    }
-
     // PCでは ← → キーでも移動できる
     document.addEventListener('keydown', (event) => {
         const screen = document.getElementById('tutorialLessonScreen');
@@ -333,7 +326,7 @@
     });
 
     Object.assign(Tutorial, {
-        openCourses, openCourse, startLesson, next, back, goTitle, backToLessons, openFromHelp, playGame,
+        openCourses, openCourse, startLesson, next, back, goTitle, backToLessons, openFromHelp,
         getCourses, findLesson,
         getSession: () => session,
         reloadProgress: () => { progress = null; return getProgress(); },

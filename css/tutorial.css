@@ -117,14 +117,6 @@
     color: var(--tu-accent, #3b82f6);
 }
 
-.tu-btn-game {
-    background: linear-gradient(45deg, #f59e0b, #ea580c);
-    border-color: #ea580c;
-    color: #fff;
-    font-size: clamp(15px, 4vw, 18px);
-    box-shadow: 0 4px 10px rgba(234, 88, 12, 0.3);
-}
-
 /* ===== 画面の骨組み ===== */
 .container:has(.tu-screen.active) {
     height: 100dvh;
@@ -491,12 +483,13 @@
 }
 
 .tu-nav-next {
-    flex: 0 1 220px;
+    flex: 0 1 170px;
 }
 
 .tu-nav-count {
     font-size: 13px;
     color: var(--tu-muted);
+    white-space: nowrap;
 }
 
 /* ===== 解説（STEP 1） ===== */
@@ -584,6 +577,13 @@
 .tu-work .tu-line .tu-formula {
     font-size: clamp(18px, 5vw, 26px);
     white-space: normal;
+    min-width: 0;
+    max-width: 100%;
+}
+
+/* 「=」で区切った式のまとまり。まとまりの中では改行しない */
+.tu-seg {
+    white-space: nowrap;
 }
 
 .tu-fill-template .tu-math {
@@ -651,8 +651,13 @@
 
 .tu-focus {
     outline: 2.5px solid currentColor;
-    outline-offset: 2px;
+    outline-offset: 0;
     font-weight: 700;
+}
+
+/* アニメーションの項は、強調の枠が となりの文字（x など）に重ならないように少し間をあける */
+.tu-anim-stage .tu-term {
+    margin: 0 3px;
 }
 
 .tu-strike {

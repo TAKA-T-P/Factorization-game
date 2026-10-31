@@ -55,6 +55,48 @@
         }).join('');
     }
 
+    // 式を「=」の前で区切る（[[…]]・{{…}}・√{…} の中の「=」では区切らない）
+    function splitAtEquals(markup) {
+        const parts = [];
+        let depth = 0;
+        let start = 0;
+        for (let i = 0; i < markup.length; i++) {
+            const c = markup[i];
+            if (c === '[' || c === '{') depth++;
+            else if (c === ']' || c === '}') depth--;
+            else if (c === '=' && depth === 0) {
+                parts.push(markup.slice(start, i));
+                start = i + 1;
+            }
+        }
+        parts.push(markup.slice(start));
+        return parts;
+    }
+
+    // 式の途中では改行せず、幅が足りないときは「=」の前だけで改行できるようにする
+    function equation(markup) {
+        const parts = splitAtEquals(markup);
+        if (parts.length === 1) return formula(markup);
+        return parts.map((part, i) => {
+            const body = formula(part.trim());
+            if (i === 0) return part.trim() ? `<span class="tu-seg">${body}</span>` : '';
+            return `<span class="tu-seg">= ${body}</span>`;
+        }).filter(Boolean).join(' ');
+    }
+
+    // それでも1つの区切りが画面に入らないときは、その式だけ文字を小さくする
+    function fitFormulas(root) {
+        if (!root || !window.getComputedStyle) return;
+        root.querySelectorAll('.tu-learn-math .tu-formula, .tu-problem-math .tu-formula, .tu-work .tu-formula').forEach(el => {
+            el.style.fontSize = '';
+            let size = parseFloat(window.getComputedStyle(el).fontSize);
+            for (let guard = 0; guard < 20 && el.scrollWidth > el.clientWidth + 1 && size > 12; guard++) {
+                size -= 1;
+                el.style.fontSize = `${size}px`;
+            }
+        });
+    }
+
     // 数式の行（文字列 または {m, note, cls} / {arrow, up}）をHTMLにする
     function renderLines(lines, enterFrom) {
         return (lines || []).map((line, i) => {
@@ -67,7 +109,7 @@
                 return `<div class="${classes.join(' ')} tu-line-arrow"><span class="tu-arrow-down" aria-hidden="true">${l.up ? '↑' : '↓'}</span>${label}</div>`;
             }
             const note = l.note ? `<span class="tu-line-note">${rich(l.note)}</span>` : '';
-            return `<div class="${classes.join(' ')}"><span class="tu-formula">${formula(l.m)}</span>${note}</div>`;
+            return `<div class="${classes.join(' ')}"><span class="tu-formula">${equation(l.m)}</span>${note}</div>`;
         }).join('');
     }
 
@@ -165,7 +207,7 @@
             const marker = document.createElementNS(NS, 'marker');
             marker.setAttribute('id', `tu-arrowhead-${i}`);
             marker.setAttribute('viewBox', '0 0 10 10');
-            marker.setAttribute('refX', '8');
+            marker.setAttribute('refX', '10'); // 矢印の先端を線の終わりにぴったり合わせる
             marker.setAttribute('refY', '5');
             marker.setAttribute('markerWidth', '7');
             marker.setAttribute('markerHeight', '7');
@@ -178,10 +220,24 @@
         });
         svg.appendChild(defs);
 
+        // 登場アニメーション（移動・拡大）の途中でも、止まったときの位置で矢印を引く
         const rel = el => {
-            const r = el.getBoundingClientRect();
-            return { cx: r.left - base.left + r.width / 2, top: r.top - base.top, bottom: r.bottom - base.top };
+            let x = 0;
+            let y = 0;
+            let node = el;
+            while (node && node !== stage) {
+                x += node.offsetLeft;
+                y += node.offsetTop;
+                node = node.offsetParent;
+            }
+            if (node !== stage) {
+                const r = el.getBoundingClientRect();
+                return { cx: r.left - base.left + r.width / 2, top: r.top - base.top, bottom: r.bottom - base.top };
+            }
+            return { cx: x + el.offsetWidth / 2, top: y, bottom: y + el.offsetHeight };
         };
+        // 項の枠線（強調）と矢印の先端が重ならないように、少し離して止める
+        const GAP = 6;
 
         links.forEach(([from, to, color = 0], i) => {
             const a = stage.querySelector(`[data-t="${from}"]`);
@@ -193,13 +249,14 @@
             if (Math.abs(ra.top - rb.top) < 6) {
                 // 同じ行：上側に弧を描く
                 const y = Math.min(ra.top, rb.top) - 2;
+                const y2 = Math.min(ra.top, rb.top) - GAP;
                 const lift = 12 + Math.min(26, Math.abs(rb.cx - ra.cx) * 0.25);
-                d = `M ${ra.cx} ${y} C ${ra.cx} ${y - lift}, ${rb.cx} ${y - lift}, ${rb.cx} ${y}`;
+                d = `M ${ra.cx} ${y} C ${ra.cx} ${y - lift}, ${rb.cx} ${y - lift}, ${rb.cx} ${y2}`;
             } else {
                 // 別の行：上から下（または下から上）へ
                 const down = rb.top > ra.top;
                 const y1 = down ? ra.bottom + 2 : ra.top - 2;
-                const y2 = down ? rb.top - 2 : rb.bottom + 2;
+                const y2 = down ? rb.top - GAP : rb.bottom + GAP;
                 const my = (y1 + y2) / 2;
                 d = `M ${ra.cx} ${y1} C ${ra.cx} ${my}, ${rb.cx} ${my}, ${rb.cx} ${y2}`;
             }
@@ -224,8 +281,9 @@
     }
 
     window.addEventListener('resize', () => {
+        fitFormulas(document.getElementById('tutorialLessonScreen'));
         if (activeStage && activeStage.isConnected) drawLinks(activeStage, activeLinks, false);
     });
 
-    Tutorial.render = { formula, rich, renderLines, renderAnimationFrame, escapeHtml, prefersReducedMotion };
+    Tutorial.render = { formula, equation, rich, renderLines, renderAnimationFrame, fitFormulas, escapeHtml, prefersReducedMotion };
 })();

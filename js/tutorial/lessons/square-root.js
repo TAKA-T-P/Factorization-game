@@ -6,8 +6,6 @@
     icon: '🌱',
     title: '平方根マスター講座',
     description: '「2乗する前の数」平方根と、記号 √ の使い方を学ぼう。√ の中を簡単にする方法から分母の有理化まで！',
-    gameMode: 'squareRoot',
-    gameName: '平方根ラッシュ',
     lessons: [
         // ===== LESSON 1 =====
         {

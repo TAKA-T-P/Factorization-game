@@ -68,13 +68,11 @@ test('3講座・各5レッスン・全15レッスンがある', () => {
     ids.forEach(id => assert.match(id, /^(expansion|factorization|square-root)-0[1-5]$/));
 });
 
-test('講座にゲームモード・色・説明が設定されている', () => {
-    const modes = { expansion: 'expand', factorization: 'factorize', 'square-root': 'squareRoot' };
+test('講座に色・説明が設定されている', () => {
     const themes = { expansion: 'expand', factorization: 'factor', 'square-root': 'root' };
     courses.forEach(c => {
-        assert.equal(c.gameMode, modes[c.id]);
         assert.equal(c.theme, themes[c.id]);
-        assert.ok(c.title && c.description && c.gameName && c.icon);
+        assert.ok(c.title && c.description && c.icon);
     });
 });
 
