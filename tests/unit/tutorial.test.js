@@ -104,8 +104,7 @@ test('タイトルの入口から講座選択・レッスン一覧へ進める',
     const window = await loadApp();
     const { document } = window;
     const entry = document.getElementById('tutorialEntryBtn');
-    assert.ok(entry.textContent.includes('📘 はじめての数学講座'));
-    assert.ok(entry.textContent.includes('公式がわからなくても大丈夫！'));
+    assert.ok(entry.textContent.includes('📘 はじめての因数×展開講座'));
     entry.click();
     assert.ok(active(window, 'tutorialCoursesScreen'));
     const cards = document.querySelectorAll('.tu-course-card');
