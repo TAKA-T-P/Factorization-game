@@ -623,6 +623,13 @@
     color: var(--tu-accent);
     font-weight: 700;
     align-items: center;
+    column-gap: 28px;
+}
+
+.tu-arrow-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
 }
 
 .tu-arrow-down {

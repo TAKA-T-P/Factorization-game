@@ -97,7 +97,7 @@
         });
     }
 
-    // 数式の行（文字列 または {m, note, cls} / {arrow, up}）をHTMLにする
+    // 数式の行（文字列 または {m, note, cls} / {arrow, up, back}）をHTMLにする
     function renderLines(lines, enterFrom) {
         return (lines || []).map((line, i) => {
             const l = typeof line === 'string' ? { m: line } : line;
@@ -105,8 +105,13 @@
             if (l.cls) classes.push(`tu-line-${l.cls}`);
             if (enterFrom !== undefined && i >= enterFrom) classes.push('tu-enter');
             if (l.arrow !== undefined) {
-                const label = l.arrow === true ? '' : `<span class="tu-arrow-label">${rich(l.arrow)}</span>`;
-                return `<div class="${classes.join(' ')} tu-line-arrow"><span class="tu-arrow-down" aria-hidden="true">${l.up ? '↑' : '↓'}</span>${label}</div>`;
+                const arrow = (text, up) => {
+                    const label = text === true ? '' : `<span class="tu-arrow-label">${rich(text)}</span>`;
+                    return `<span class="tu-arrow-item"><span class="tu-arrow-down" aria-hidden="true">${up ? '↑' : '↓'}</span>${label}</span>`;
+                };
+                // back を付けると、反対向きの矢印を同じ行に並べる（例：↓展開　↑因数分解）
+                const back = l.back !== undefined ? arrow(l.back, !l.up) : '';
+                return `<div class="${classes.join(' ')} tu-line-arrow">${arrow(l.arrow, l.up)}${back}</div>`;
             }
             const note = l.note ? `<span class="tu-line-note">${rich(l.note)}</span>` : '';
             return `<div class="${classes.join(' ')}"><span class="tu-formula">${equation(l.m)}</span>${note}</div>`;
