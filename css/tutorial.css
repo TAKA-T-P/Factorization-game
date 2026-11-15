@@ -45,9 +45,10 @@
     flex-direction: column;
     align-items: center;
     gap: 2px;
-    width: min(92vw, 440px);
+    width: fit-content; /* 文字の幅に合わせる */
+    max-width: 92vw;
     margin: 0 auto 15px;
-    padding: 8px 16px;
+    padding: 8px 28px;
     border: 2px solid #6366f1;
     border-radius: 14px;
     background: linear-gradient(135deg, #eef2ff 0%, #ffffff 100%);

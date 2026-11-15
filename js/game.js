@@ -363,10 +363,14 @@ function generateQuestion() {
     hideHelpButton();
     helpUsed = false;
 
-    // 10秒後にヘルプボタンを表示
-    helpButtonTimeout = setTrackedTimeout(() => {
+    // 10秒後にヘルプボタンを表示（練習モードは最初から表示）
+    if (isPracticeMode) {
         showHelpButton();
-    }, 10000);
+    } else {
+        helpButtonTimeout = setTrackedTimeout(() => {
+            showHelpButton();
+        }, 10000);
+    }
 
     // 最終問題の場合、20秒のタイムアウトタイマーを開始
     if (isLastQuestion && lastQuestionTimeout) {

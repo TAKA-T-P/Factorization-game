@@ -10,6 +10,12 @@ function showCorrectAnswerHint() {
         btn.classList.remove('hint-highlight');
     });
 
+    // 練習モードは正解のボタンを光らせず、考え方のヒント文だけを上部に出す
+    if (isPracticeMode) {
+        showPracticeHintText();
+        return;
+    }
+
     if (gameMode === 'expand') {
         // 正解の選択肢を集める
         const correctButtons = [];

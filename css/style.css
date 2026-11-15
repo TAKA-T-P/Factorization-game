@@ -1016,6 +1016,47 @@ body.practice-mode .combo-help-container {
     box-shadow: 0 4px 10px rgba(100, 116, 139, 0.3);
 }
 
+/* ヒント文の場所。高さを固定して、表示しても問題・選択肢が動かないようにする */
+.practice-hint {
+    display: none;
+}
+
+body.practice-mode .practice-hint {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    width: 100%;
+    max-width: 480px;
+    height: calc(3 * 1.45em + 12px);
+    padding: 6px 12px;
+    box-sizing: border-box;
+    overflow: hidden;
+    border-radius: 10px;
+    background: #f5f3ff;
+    border: 2px solid #c4b5fd;
+    color: #4c1d95;
+    font-size: clamp(12px, 3.4vw, 15px);
+    line-height: 1.45;
+    text-align: left;
+    visibility: hidden;
+}
+
+body.practice-mode .practice-hint.show {
+    visibility: visible;
+    animation: help-button-appear 0.4s ease;
+}
+
+.practice-hint-label {
+    flex-shrink: 0;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: #fff;
+    font-size: 0.85em;
+    font-weight: 700;
+}
+
 /* 判定中・正解後は選択肢を押せないようにする */
 #answerGrid.practice-locked {
     pointer-events: none;

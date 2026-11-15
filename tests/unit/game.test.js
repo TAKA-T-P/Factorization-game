@@ -175,16 +175,20 @@ test('練習モード：時間・スコアなし、不正解は選び直し、�
     assert.ok(controlsShown());
     assert.equal(window.run('currentQuestion.original'), question);
     assert.ok(document.getElementById('answerGrid').classList.contains('practice-locked'));
+    // ヒントボタンを使わずに正解しても、ヒント文が出る
+    assert.ok(document.getElementById('practiceHint').classList.contains('show'));
+    assert.ok(document.getElementById('practiceHint').textContent.startsWith('ヒント'));
     // ボタンは「正解!」と同じ行に出る
     const row = document.getElementById('comboDisplay').parentElement;
     assert.equal(document.getElementById('practiceControls').parentElement, row);
     assert.ok(document.getElementById('comboDisplay').textContent.includes('正解!'));
     assert.deepEqual([window.run('score'), window.run('correctAnswers'), window.run('wrongAnswers'), window.run('questionHistory.length')], [0, 0, 0, 0]);
 
-    // 「次へ」で次の問題
+    // 「次へ」で次の問題（ヒント文は消える）
     document.querySelector('#practiceControls .practice-next-btn').click();
     assert.notEqual(window.run('currentQuestion.original'), question);
     assert.ok(!controlsShown());
+    assert.ok(!document.getElementById('practiceHint').classList.contains('show'));
 
     // 「練習をやめる」でタイトルへ。ハイスコアは変わらない
     window.run('correctAnswer()');
@@ -223,6 +227,82 @@ test('練習モード：因数分解・平方根・ハードでも、正解す�
         assert.deepEqual([window.run('score'), window.run('correctAnswers'), window.run('wrongAnswers')], [0, 0, 0]);
         window.run('goToTitle()');
     }
+    assert.deepEqual(window.__errors, []);
+    window.close();
+});
+
+test('練習モード：ヒントボタンは最初から出ていて、押すとヒント文だけを出す（ボタンは光らない）。式は正しい', async () => {
+    const window = await loadApp({ seed: 31 });
+    const results = JSON.parse(window.run(`JSON.stringify((() => { const out = [];
+        selectTime('practice');
+        for (const m of ['expand', 'factorize', 'squareRoot']) for (const d of ['normal', 'hard']) {
+            selectDifficulty(d); startGame(m);
+            for (let i = 0; i < 150; i++) {
+                const hint = document.getElementById('practiceHint');
+                const hiddenBefore = !hint.classList.contains('show');
+                const buttonShown = document.getElementById('helpButton').classList.contains('show');
+                showCorrectAnswerHint();
+                out.push({ mode: m, q: currentQuestion, last: lastQuestionValues, hiddenBefore, buttonShown, shown: hint.classList.contains('show'), text: hint.textContent, lit: document.querySelectorAll('.hint-highlight').length });
+                clearAllTimeouts();
+                nextPracticeQuestion();
+            }
+            goToTitle();
+        } return out; })())`));
+    // 表示用の式（2×(−3)、(−4)² など）を計算する
+    const calc = expr => Function(`return (${expr.replace(/−/g, '-').replace(/×/g, '*').replace(/(\d+|\([^()]*\))²/g, '($1**2)')})`)();
+    const patterns = new Set();
+    results.forEach(r => {
+        const where = `${r.mode} ${r.q.original}: ${r.text}`;
+        patterns.add(`${r.mode}:${r.q.hardPattern}:${r.q.isFraction}`);
+        assert.ok(r.hiddenBefore, `${where} 次の問題ではヒント文が消える`);
+        assert.ok(r.shown && r.text.startsWith('ヒント'), where);
+        assert.ok(r.buttonShown, `${where} ヒントボタンは最初から出ている`);
+        assert.equal(r.lit, 0, `${where} 正解のボタンは光らない`);
+        // スマホ縦画面でも3行に収まる長さ（「ヒント」ラベルを含めて）
+        assert.ok(r.text.length <= 58, `${where} 長すぎる（${r.text.length}文字）`);
+        if (r.mode === 'expand') {
+            const want = { 'x²': r.q.x2Coeff ?? 1, x: r.q.xCoeff, xy: r.q.xyCoeff, 'y²': r.q.y2Coeff, 定数項: r.q.constant };
+            for (const [, name, expr] of r.text.matchAll(/(x²|xy|x|y²)の係数は ([\d()+−×²]+)|(定数項)は ([\d()+−×²]+)/g).map(m => [m[0], m[1] || m[3], m[2] || m[4]])) {
+                assert.equal(calc(expr), want[name], `${where}（${name}）`);
+            }
+        } else if (r.mode === 'factorize' && /かけて/.test(r.text)) {
+            const [, prod, sum] = r.text.match(/かけて (−?\d+)、たして (−?\d+)/).map(v => v && Number(v.replace('−', '-')));
+            const [a, b] = r.q.hardPattern === 1 ? [r.q.a, r.q.b] : [r.q.p, r.q.q];
+            assert.deepEqual([prod, sum], [a * b, a + b], where);
+        } else if (r.mode === 'squareRoot' && !r.q.isFraction && r.q.b !== 1) {
+            const [, x, expr] = r.text.match(/(\d+)=(\d+×\d+)/);
+            assert.equal(Number(x), r.q.x, where);
+            assert.equal(calc(expr), r.q.x, where);
+        }
+    });
+    // (x+a)(x−a) の形は、和と差の公式のヒントになる
+    const diffs = results.filter(r => (r.mode === 'expand' && [0, 1, 6].includes(r.q.hardPattern) && r.last.a === -r.last.b) ||
+        (r.mode === 'factorize' && (r.q.hardPattern === 0 ? r.q.p === -r.q.q : r.q.hardPattern === 1 && r.q.a === -r.q.b)));
+    assert.ok(diffs.some(r => r.mode === 'expand') && diffs.some(r => r.mode === 'factorize'), '和と差の形の問題が出ている');
+    diffs.forEach(r => assert.ok(r.text.includes('(x+a)(x−a)') && !r.text.includes('(x+b)') && !r.text.includes('かけて'), `${r.q.original}: ${r.text}`));
+    // 答えが (x+a)² になる因数分解は、2乗の公式のヒントになる
+    const squares = results.filter(r => r.mode === 'factorize' && r.q.hardPattern === 0 && r.q.p === r.q.q);
+    assert.ok(squares.length > 0, '答えが (x+a)² の問題が出ている');
+    squares.forEach(r => {
+        const where = `${r.q.original}: ${r.text}`;
+        assert.ok(!r.text.includes('かけて'), where);
+        const [, sq, root, expr, coeff] = r.text.match(/(\d+)=(\d+)²、xの係数が (2×[\d()−]+)=(−?\d+)/);
+        assert.equal(Number(sq), r.q.p * r.q.p, where);
+        assert.equal(Number(root), Math.abs(r.q.p), where);
+        assert.equal(calc(expr), 2 * r.q.p, where);
+        assert.equal(Number(coeff.replace('−', '-')), 2 * r.q.p, where);
+    });
+    // ハードの各パターン（展開1〜7、因数分解1〜6、平方根の有理化）も出ている
+    for (const p of ['expand:0:undefined', 'expand:1:undefined', 'expand:7:undefined', 'factorize:0:undefined', 'factorize:6:undefined', 'squareRoot:undefined:true', 'squareRoot:undefined:false']) {
+        assert.ok(patterns.has(p), p);
+    }
+    // 通常のゲームでは、ヒント文は出ない
+    window.run(`selectTime(60); startGame('expand'); clearAllTimeouts(); generateQuestion();`);
+    assert.ok(!window.document.getElementById('helpButton').classList.contains('show'), '通常のゲームではヒントボタンは10秒後');
+    window.run('showCorrectAnswerHint()');
+    assert.ok(!window.document.getElementById('practiceHint').classList.contains('show'));
+    assert.ok(window.document.querySelectorAll('.hint-highlight').length >= 1, '通常のゲームでは正解のボタンが光る');
+    window.run('goToTitle()');
     assert.deepEqual(window.__errors, []);
     window.close();
 });
